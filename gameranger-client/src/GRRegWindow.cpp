@@ -38,10 +38,10 @@ GRRegWindow::GRRegWindow(const wxString &title, const wxPoint &pos, const wxSize
 	m_socket->Notify(true);
 
 	//Status Window
-	statusWindow = new GRConnectStatusWindow(wxT("Connecting to server..."), wxDefaultPosition, wxDefaultSize);
+	statusWindow = new GRConnectStatusWindow(this, wxT("Connecting to server..."), wxDefaultPosition, wxDefaultSize);
 
 	//Log Window
-	logWindow = new GRLogWindow(wxT("Log Window."), wxDefaultPosition, wxDefaultSize);
+	logWindow = new GRLogWindow(this, wxT("Log Window."), wxDefaultPosition, wxDefaultSize);
 
 	logWindow->Show(false);
 	statusWindow->Show(false);
@@ -383,6 +383,8 @@ void GRRegWindow::registerAccount(GR_PACKET *Packet)
 	idAndMac[2] = 0;
 	idAndMac[3] = 0;
 
+
+	srand(time(NULL));
 	//make us a little random mac address
 	idAndMac[4] = 0;
 	idAndMac[5] = 3;

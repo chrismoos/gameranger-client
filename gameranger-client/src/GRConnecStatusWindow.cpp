@@ -23,8 +23,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRConnectStatusWindow.h"
 #include "memdebug.h"
 
-GRConnectStatusWindow::GRConnectStatusWindow(const wxString &title, const wxPoint &pos, const wxSize &size)
-		: wxFrame(NULL, -1, title, pos, size, wxCAPTION)
+GRConnectStatusWindow::GRConnectStatusWindow(const wxFrame *parent, const wxString &title, const wxPoint &pos, const wxSize &size)
+		: wxFrame((wxFrame*)parent, -1, title, pos, size, wxCAPTION)
 {
 	SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
 	wxBoxSizer *topSizer = new wxBoxSizer(wxHORIZONTAL);

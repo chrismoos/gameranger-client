@@ -97,13 +97,13 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 	CentreOnScreen();
 
 	//Status Window
-	statusWindow = new GRConnectStatusWindow(wxT("Connecting to server..."), wxDefaultPosition, wxDefaultSize);
+	statusWindow = new GRConnectStatusWindow(this, wxT("Connecting to server..."), wxDefaultPosition, wxDefaultSize);
 
 	loginWindow = NULL;
 	regWindow = NULL;
 
 	//Log Window
-	logWindow = new GRLogWindow(wxT("Log Window."), wxDefaultPosition, wxDefaultSize);
+	logWindow = new GRLogWindow(this, wxT("Log Window."), wxDefaultPosition, wxDefaultSize);
 	logWindow->mainWindow = this;
 #ifdef SHOW_LOG_WINDOW
 	logWindow->Show(true);
@@ -140,22 +140,11 @@ GRMainWindow::~GRMainWindow()
 {
 	wxUint32 x;
 
-	if(loginWindow != NULL) {
-		loginWindow->mainWindow = NULL;
-		loginWindow->Close();
-	}
-
 	/* timer */
 	delete(timer);
 
 	/* Destroy socket */
 	delete(m_socket);
-
-	if(logWindow != NULL) {
-		logWindow->mainWindow = NULL;
-		logWindow->Close();
-	}
-	statusWindow->Close();
 
 	
 	for(x = 0; x < Lobbies.size(); x++)
@@ -939,7 +928,7 @@ void GRMainWindow::loginToGR(GR_PACKET *Packet)
 	wxUint8 *payload = NULL;
 	bool emailLogin;
 
-	if(loginWindow->currentProfile->grID == 0) emailLogin = true;
+	if(myUserID == 0) emailLogin = true;
 	else emailLogin = false;
 
 	char temp[1];
@@ -1025,17 +1014,17 @@ void GRMainWindow::loginToGR(GR_PACKET *Packet)
 	if(emailLogin == true) loginPacketHeader.loginType = 2; //email based login
 	else loginPacketHeader.loginType = 1;
 
-	GRID = htonl(loginWindow->currentProfile->grID);
+	GRID = htonl(myUserID);
 	if(emailLogin == true) loginPacketHeader.previousGRID = htonl(0);
 	else loginPacketHeader.previousGRID = GRID;
 
 	//mac
-	loginPacketHeader.macAddress[0] = (wxUint8)0;
-	loginPacketHeader.macAddress[1] = (wxUint8)3;
-	loginPacketHeader.macAddress[2] = (wxUint8)rand();
-	loginPacketHeader.macAddress[3] = (wxUint8)rand();
-	loginPacketHeader.macAddress[4] = (wxUint8)rand();
-	loginPacketHeader.macAddress[5] = (wxUint8)rand();
+	loginPacketHeader.macAddress[0] = loginWindow->currentProfile->macAddress[0];
+	loginPacketHeader.macAddress[1] = loginWindow->currentProfile->macAddress[1];
+	loginPacketHeader.macAddress[2] = loginWindow->currentProfile->macAddress[2];
+	loginPacketHeader.macAddress[3] = loginWindow->currentProfile->macAddress[3];
+	loginPacketHeader.macAddress[4] = loginWindow->currentProfile->macAddress[4];
+	loginPacketHeader.macAddress[5] = loginWindow->currentProfile->macAddress[5];
 
 	//xor each byte
 	for(wxUint32 x = 0; x < 6; x++) loginPacketHeader.macAddress[x] ^= 0x77;
@@ -1528,7 +1517,7 @@ void GRMainWindow::OnLoginMenu(wxCommandEvent &event)
 	}
 		
 	//Login Window
-	loginWindow = new GRLoginWindow(wxT("Login to GameRanger"), wxDefaultPosition,
+	loginWindow = new GRLoginWindow(this, wxT("Login to GameRanger"), wxDefaultPosition,
 			wxSize(200, 200));
 	loginWindow->mainWindow = this;
 	loginWindow->Show(true);
@@ -1791,7 +1780,7 @@ void GRMainWindow::OnUserDoubleClick(wxListEvent& event)
 	}
 
 	//Create new PM Window
-	GRPrivateMessage *pm = new GRPrivateMessage(wxT("Private Message - ")+user->nick, wxDefaultPosition, wxDefaultSize);
+	GRPrivateMessage *pm = new GRPrivateMessage(this, wxT("Private Message - ")+user->nick, wxDefaultPosition, wxDefaultSize);
 	pm->mainWindow = this;
 	pm->userID = user->userID;
 	pm->nickname = user->nick;
@@ -1841,7 +1830,7 @@ void GRMainWindow::receivedPrivateMessage(GR_PACKET *Packet)
 	}
 
 	//Create new PM Window
-	GRPrivateMessage *pm = new GRPrivateMessage(wxT("Private Message - ")+nickname, wxDefaultPosition, wxDefaultSize);
+	GRPrivateMessage *pm = new GRPrivateMessage(this, wxT("Private Message - ")+nickname, wxDefaultPosition, wxDefaultSize);
 	pm->mainWindow = this;
 	pm->userID = userID;
 	pm->nickname = nickname;
@@ -1885,6 +1874,7 @@ void GRMainWindow::gameRoomUserList(GR_PACKET *Packet)
 	wxString nickname;
 	wxUint8 status;
 	wxUint32 roomID;
+	wxIcon roomIcon;
 
 	ptr = Packet->payload;
 
@@ -1904,11 +1894,16 @@ void GRMainWindow::gameRoomUserList(GR_PACKET *Packet)
 	userCount = wxUINT32_SWAP_ON_LE(userCount);
 	ptr += sizeof(wxUint32);
 
-	GRGameRoomWindow *gameRoom = new GRGameRoomWindow(room->Plugin->gameName+wxT(" - ")+room->host, wxDefaultPosition, wxDefaultSize);
+	GRGameRoomWindow *gameRoom = new GRGameRoomWindow(this, room->Plugin->gameName+wxT(" - ")+room->host, wxDefaultPosition, wxDefaultSize);
 	gameRoom->mainWindow = this;
 	gameRoom->gameRoom = room;
-	wxIcon roomIcon = wxNullIcon;
-	if(room->Plugin->image != NULL) roomIcon.CopyFromBitmap(room->Plugin->image->ConvertToBitmap());
+	
+
+	if(room->Plugin->image != NULL) 
+	{
+		roomIcon.CopyFromBitmap(wxBitmap(room->Plugin->image));
+	}
+
 	gameRoom->SetIcon(roomIcon);
 	gameRoom->userListBox->SetImageList(iconImgList, wxIMAGE_LIST_SMALL);
 	gameRoom->addTextWithColor(wxT("Description: ")+room->description+wxT("\n\n"), *wxRED);

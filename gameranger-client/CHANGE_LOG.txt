@@ -3,6 +3,14 @@ Gameranger Client
 Change Log
 ---------------------------------------------
 
+12/22/04 -
+
+Added memory leak detection for Visual studio.
+Fixed problem with random mac addresses.
+Fixed a problem with first time e-mail based logins.
+Fixed a memory leak when changing rooms.
+
+
 Version 0.3 -
 
 New features:

@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRMainWindow.h"
 #include "memdebug.h"
 
-GRPrivateMessage::GRPrivateMessage(const wxString &title, const wxPoint &pos, const wxSize &size)
+GRPrivateMessage::GRPrivateMessage(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size)
 		: wxFrame((wxFrame *) NULL, -1, title, pos, size)
 {
 	//Set some generic window options

@@ -308,6 +308,11 @@ void GRLobby::chatMessage(GR_PACKET *Packet, int type)
 //----------------------------------------------------------------------
 void GRLobby::ClearUsers()
 {
+	int x;
+	for(x = 0; x < Users.size(); x++)
+	{
+		delete(Users[x]);
+	}
 	Users.clear();
 	userCount = 0;
 }

@@ -144,6 +144,7 @@ void GRProfile::makeMac()
 	wxUint32 x;
 	temp[0] = 0;
 	temp[1] = 3;
+	srand(time(NULL));
 	for(x = 2; x < 6; x++) temp[x] = rand();
 	memcpy(macAddress, temp, 6);
 }

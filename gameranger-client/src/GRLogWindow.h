@@ -29,7 +29,7 @@ class GRMainWindow;
 class GRLogWindow : public wxFrame
 {
 public:
-	GRLogWindow(const wxString &title, const wxPoint &pos, const wxSize &size);
+	GRLogWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size);
 	~GRLogWindow();
 
 	wxTextCtrl *textLog;

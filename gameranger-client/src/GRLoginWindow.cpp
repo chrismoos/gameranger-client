@@ -23,8 +23,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRProfile.h"
 #include "memdebug.h"
 
-GRLoginWindow::GRLoginWindow(const wxString &title, const wxPoint &pos, const wxSize &size)
-		: wxFrame((wxFrame *) NULL, -1, title, pos, size)
+GRLoginWindow::GRLoginWindow(const wxFrame *parent, const wxString &title, const wxPoint &pos, const wxSize &size)
+		: wxFrame((wxFrame *) parent, -1, title, pos, size)
 {
 	//Set some generic window options
 	SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
@@ -47,7 +47,6 @@ GRLoginWindow::GRLoginWindow(const wxString &title, const wxPoint &pos, const wx
 GRLoginWindow::~GRLoginWindow()
 {
 	wxUint32 x;
-	if(mainWindow != NULL) mainWindow->loginWindow = 0;
 	for(x = 0; x < Profiles.size(); x++) delete(Profiles[x]);
 }
 //-------------------------------------------------------------------------------
@@ -129,6 +128,8 @@ void GRLoginWindow::OnLoginButton(wxCommandEvent &event)
 		currentProfile = new GRProfile();
 		Profiles.push_back(currentProfile);
 	}
+	mainWindow->myUserID = currentProfile->grID;
+	mainWindow->myNickname = currentProfile->nickname;
 	mainWindow->Login((char*)(const char*)emailEdit->GetValue().mb_str(), (char*)(const char*)passwordEdit->GetValue().mb_str());
 
 }
@@ -156,7 +157,6 @@ void GRLoginWindow::loadProfiles()
 		profile->Read(wxGetCwd()+wxT("/profiles/")+filename);
 		profile->comboIndex = comboBox->GetCount();
 		comboBox->Append(profile->nickname);
-		comboBox->SetClientData(profile->comboIndex, (void*)profile);
 		Profiles.push_back(profile);
 		cont = dir.GetNext(&filename);
 	}
@@ -165,16 +165,28 @@ void GRLoginWindow::loadProfiles()
 	profile->email = wxT("");
 	index = comboBox->GetCount();
 	comboBox->Append(wxT("New Profile"));
-	comboBox->SetClientData(index, (void*)profile);
 	Profiles.push_back(profile);
 }
 //------------------------------------------------------------------------------
 void GRLoginWindow::OnComboBoxSelect(wxCommandEvent &event)
 {
-	if(comboBox->GetSelection() == -1) return;
-	GRProfile *profile;
+	int x, index;
+	GRProfile *profile = NULL;
 
-	profile = (GRProfile*)comboBox->GetClientData(comboBox->GetSelection());
+	index = comboBox->GetSelection();
+	if(index == -1) return;
+
+	for(x = 0; x < Profiles.size(); x++)
+	{
+		if(Profiles[x]->comboIndex == index)
+		{
+			profile = Profiles[x];
+			break;
+		}
+	}
+
+	if(profile == NULL) return;
+
 	currentProfile = profile;
 
 	emailEdit->SetValue(profile->email);

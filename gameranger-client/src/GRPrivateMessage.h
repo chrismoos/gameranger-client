@@ -30,7 +30,7 @@ class GRMainWindow;
 class GRPrivateMessage : public wxFrame
 {
 public:
-	GRPrivateMessage(const wxString &title, const wxPoint &pos, const wxSize &size);
+	GRPrivateMessage(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size);
 	~GRPrivateMessage();
 
 	//GUI Controls

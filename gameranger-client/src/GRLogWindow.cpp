@@ -23,8 +23,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRMainWindow.h"
 #include "memdebug.h"
 
-GRLogWindow::GRLogWindow(const wxString &title, const wxPoint &pos, const wxSize &size)
-		: wxFrame((wxFrame *) NULL, -1, title, pos, size)
+GRLogWindow::GRLogWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size)
+		: wxFrame((wxFrame *)parent, -1, title, pos, size)
 {
 	//Set some generic window options
 	SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
@@ -45,7 +45,6 @@ GRLogWindow::GRLogWindow(const wxString &title, const wxPoint &pos, const wxSize
 //-------------------------------------------------------------------------------
 GRLogWindow::~GRLogWindow()
 {
-	if(mainWindow != NULL) mainWindow->logWindow = 0;
 }
 //-------------------------------------------------------------------------------
 void GRLogWindow::logText(wxString str)

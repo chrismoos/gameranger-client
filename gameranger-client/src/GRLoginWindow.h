@@ -31,7 +31,7 @@ class GRProfile;
 class GRLoginWindow : public wxFrame
 {
 	public:
-		GRLoginWindow(const wxString &title, const wxPoint &pos, const wxSize &size);
+		GRLoginWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size);
 		~GRLoginWindow();
 
 		//GUI Functions

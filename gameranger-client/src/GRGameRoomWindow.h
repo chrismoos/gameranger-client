@@ -33,7 +33,7 @@ using namespace std;
 class GRGameRoomWindow : public wxFrame
 {
 public:
-	GRGameRoomWindow(const wxString &title, const wxPoint &pos, const wxSize &size);
+	GRGameRoomWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size);
 	~GRGameRoomWindow();
 
 	//GUI Controls
