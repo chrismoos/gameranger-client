@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "GRProtocol.h"
 
-//#define SHOW_LOG_WINDOW
+#define SHOW_LOG_WINDOW
 
 #include <wx/wxprec.h>
 #include <wx/file.h>
@@ -40,6 +40,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #ifndef WIN32
 #include <netinet/in.h>
+#else
+
+#ifdef _DEBUG
+#include <crtdbg.h>
+#define DEBUG_NEW new(_NORMAL_BLOCK ,__FILE__, __LINE__)
+#else
+#define DEBUG_NEW new
+#endif
+
 #endif
 
 #ifndef WX_PRECOMP

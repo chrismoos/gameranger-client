@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "GRLoginWindow.h"
 #include "GRProfile.h"
+#include "memdebug.h"
 
 GRLoginWindow::GRLoginWindow(const wxString &title, const wxPoint &pos, const wxSize &size)
 		: wxFrame((wxFrame *) NULL, -1, title, pos, size)

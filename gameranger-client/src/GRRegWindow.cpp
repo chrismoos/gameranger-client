@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRProfile.h"
 #include "GRMainWindow.h"
 #include "GRLoginWindow.h"
+#include "memdebug.h"
 
 
 GRRegWindow::GRRegWindow(const wxString &title, const wxPoint &pos, const wxSize &size)

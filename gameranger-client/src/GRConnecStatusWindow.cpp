@@ -19,7 +19,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+
 #include "GRConnectStatusWindow.h"
+#include "memdebug.h"
 
 GRConnectStatusWindow::GRConnectStatusWindow(const wxString &title, const wxPoint &pos, const wxSize &size)
 		: wxFrame(NULL, -1, title, pos, size, wxCAPTION)

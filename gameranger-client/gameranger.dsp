@@ -39,7 +39,6 @@ RSC=rc.exe
 # PROP Use_Debug_Libraries 0
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
-# PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 # ADD CPP /nologo /MD /W4 /GX /O2 /I "C:\wxWindows-2.4.2/lib/msw" /I "C:\wxWindows-2.4.2/include" /I "C:\wxWindows-2.4.2/contrib/include" /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /D "_WINDOWS" /D WINVER=0x400 /D "_MT" /D wxUSE_GUI=1 /YX /FD /c
@@ -57,17 +56,16 @@ LINK32=link.exe
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
-# PROP BASE Output_Dir "Debug"
-# PROP BASE Intermediate_Dir "Debug"
+# PROP BASE Output_Dir "gameranger___Win32_Debug"
+# PROP BASE Intermediate_Dir "gameranger___Win32_Debug"
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "Debug"
-# PROP Intermediate_Dir "Debug"
-# PROP Ignore_Export_Lib 0
+# PROP Output_Dir "gameranger___Win32_Debug"
+# PROP Intermediate_Dir "gameranger___Win32_Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W4 /Gm /GX /Zi /Od /I "C:\wxWindows-2.4.2/lib/mswd" /I "C:\wxWindows-2.4.2/include" /I "C:\wxWindows-2.4.2/contrib/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "_WINDOWS" /D WINVER=0x400 /D "_MT" /D wxUSE_GUI=1 /D "__WXDEBUG__" /D WXDEBUG=1 /YX /FD /GZ /c
+# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ  /c
+# ADD CPP /nologo /MDd /W4 /Gm /GX /Zi /Od /I "C:\wxWindows-2.4.2/lib/mswd" /I "C:\wxWindows-2.4.2/include" /I "C:\wxWindows-2.4.2/contrib/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "_WINDOWS" /D WINVER=0x400 /D "_MT" /D wxUSE_GUI=1 /D "__WXDEBUG__" /D WXDEBUG=1 /Fp"Debug/gameranger.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ   /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /i "C:\wxWindows-2.4.2/include" /d "_DEBUG"
 BSC32=bscmake.exe
@@ -75,7 +73,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib rpcrt4.lib wsock32.lib zlibd.lib regexd.lib pngd.lib jpegd.lib tiffd.lib wxmswd.lib wxxrcd.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept /libpath:"C:\wxWindows-2.4.2/lib" /libpath:"C:\wxWindows-2.4.2/contrib/lib"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib comctl32.lib rpcrt4.lib wsock32.lib zlibd.lib regexd.lib pngd.lib jpegd.lib tiffd.lib wxmswd.lib wxxrcd.lib /nologo /subsystem:windows /pdb:"Debug/gameranger.pdb" /debug /machine:I386 /out:"Debug/gameranger.exe" /pdbtype:sept /libpath:"C:\wxWindows-2.4.2/lib" /libpath:"C:\wxWindows-2.4.2/contrib/lib"
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -89,11 +87,19 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=.\gameranger.rc
+# End Source File
+# Begin Source File
+
 SOURCE=.\src\GRConnecStatusWindow.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\src\GRGameRoom.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\GRGameRoomWindow.cpp
 # End Source File
 # Begin Source File
 
@@ -125,6 +131,10 @@ SOURCE=.\src\GRPlugin.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\src\GRPrivateMessage.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\src\GRProfile.cpp
 # End Source File
 # Begin Source File
@@ -143,10 +153,6 @@ SOURCE=.\src\GRUser.cpp
 
 SOURCE=.\src\Main.cpp
 # End Source File
-# Begin Source File
-
-SOURCE="..\..\..\..\wxWindows-2.4.2\include\wx\msw\wx.rc"
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -162,6 +168,10 @@ SOURCE=.\src\GRConnectStatusWindow.h
 # Begin Source File
 
 SOURCE=.\src\GRGameRoom.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\GRGameRoomWindow.h
 # End Source File
 # Begin Source File
 
@@ -193,6 +203,10 @@ SOURCE=.\src\GRPlugin.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\src\GRPrivateMessage.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\src\GRProfile.h
 # End Source File
 # Begin Source File
@@ -215,6 +229,14 @@ SOURCE=.\src\GRUser.h
 
 SOURCE=.\src\Main.h
 # End Source File
+# Begin Source File
+
+SOURCE=.\src\memdebug.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\resource.h
+# End Source File
 # End Group
 # Begin Group "Resource Files"
 
@@ -222,24 +244,23 @@ SOURCE=.\src\Main.h
 # End Group
 # Begin Source File
 
-SOURCE=.\makefile
-# PROP Exclude_From_Scan -1
-# PROP BASE Exclude_From_Build 1
-# PROP Exclude_From_Build 1
+SOURCE=.\BUGS.txt
 # End Source File
 # Begin Source File
 
-SOURCE=.\makefile.gtk
-# PROP Exclude_From_Scan -1
-# PROP BASE Exclude_From_Build 1
-# PROP Exclude_From_Build 1
+SOURCE=.\CHANGE_LOG.txt
 # End Source File
 # Begin Source File
 
-SOURCE=.\makefile.mtf
-# PROP Exclude_From_Scan -1
-# PROP BASE Exclude_From_Build 1
-# PROP Exclude_From_Build 1
+SOURCE=.\Makefile
+# End Source File
+# Begin Source File
+
+SOURCE=.\README.txt
+# End Source File
+# Begin Source File
+
+SOURCE=.\TODO.txt
 # End Source File
 # End Target
 # End Project

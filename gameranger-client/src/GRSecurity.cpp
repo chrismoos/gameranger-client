@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "GRSecurity.h"
+#include "memdebug.h"
 
 wxUint32 encryptVerifyCode(wxUint32 code)
 {

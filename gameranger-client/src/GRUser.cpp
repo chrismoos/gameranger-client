@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRUser.h"
 #include "GRMainWindow.h"
 #include "GRLobby.h"
+#include "memdebug.h"
 
 GRUser::GRUser(wxString nick, wxUint32 userID, wxUint32 iconID)
 {

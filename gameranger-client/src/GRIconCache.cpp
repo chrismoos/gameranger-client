@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "GRIconCache.h"
 #include "GRIcon.h"
+#include "memdebug.h"
 
 GRIconCache::GRIconCache()
 {
@@ -32,8 +33,12 @@ GRIconCache::GRIconCache()
 //-----------------------------------------------------------------------
 GRIconCache::~GRIconCache()
 {
-	wxUint32 x;
-	for(x = 0; x < Icons.size(); x++) delete(Icons[x]);
+	int x;
+	for(x = 0; x < Icons.size(); x++) 
+	{
+	
+		delete(Icons[x]);
+	}
 }
 //-----------------------------------------------------------------------
 GRIcon *GRIconCache::findIcon(wxUint32 iconID)

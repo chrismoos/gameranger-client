@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRIconCache.h"
 #include "GRIcon.h"
 #include "GRLogWindow.h"
+#include "memdebug.h"
 
 GRGameRoomWindow::GRGameRoomWindow(const wxString &title, const wxPoint &pos, const wxSize &size)
 		: wxFrame((wxFrame *) NULL, -1, title, pos, size)

@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "GRGameRoom.h"
 #include "GRPlugin.h"
+#include "memdebug.h"
 
 GRGameRoom::GRGameRoom(wxUint32 gameRoomID, GRPlugin *Plugin, wxUint32 maxPlayers, wxUint32 currentPlayers, wxString ip, wxUint8 locked, wxString description, wxUint32 grID, wxUint32 iconID, wxUint32 status, wxString host)
 {

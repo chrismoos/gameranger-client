@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRRegWindow.h"
 #include "GRPrivateMessage.h"
 #include "GRGameRoomWindow.h"
+#include "memdebug.h"
 
 
 GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSize &size)
@@ -137,23 +138,26 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 //-------------------------------------------------------------------------------------
 GRMainWindow::~GRMainWindow()
 {
+	wxUint32 x;
 
 	if(loginWindow != NULL) {
 		loginWindow->mainWindow = NULL;
 		loginWindow->Close();
 	}
-/*	if(regWindow != NULL) {
-		regWindow->mainWindow = NULL;
-		regWindow->Close();
-	}
-*/
+
+	/* timer */
+	delete(timer);
+
+	/* Destroy socket */
+	delete(m_socket);
+
 	if(logWindow != NULL) {
 		logWindow->mainWindow = NULL;
 		logWindow->Close();
 	}
 	statusWindow->Close();
 
-	wxUint32 x;
+	
 	for(x = 0; x < Lobbies.size(); x++)
 	{
 		delete(Lobbies[x]);
@@ -174,9 +178,16 @@ GRMainWindow::~GRMainWindow()
 	{
 		delete(gameRoomWindows[x]);
 	}
+
+
 	if(colorTable != NULL) delete[] colorTable;
 
-	if(iconCache != NULL) iconCache->SaveCache(wxT("Icon_Cache.bin"));
+	if(iconCache != NULL) 
+	{
+		iconCache->SaveCache(wxT("Icon_Cache.bin"));
+		delete(iconCache);
+	}
+
 }
 //------------------------------------------------------------------------------------
 void GRMainWindow::Login(char *email, char *password)

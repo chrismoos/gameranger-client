@@ -20,7 +20,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "Main.h"
+#include "GRBaseDefs.h"
 #include <wx/dir.h>
+#include "memdebug.h"
 
 IMPLEMENT_APP(MainApp)
 
@@ -46,6 +48,11 @@ bool MainApp::OnInit()
 		m_loginWindow->Show(true);
 		SetTopWindow(m_loginWindow);
 	}*/
+#ifdef WIN32
+#ifdef _DEBUG
+	_CrtDumpMemoryLeaks();
+#endif
+#endif
 
 	return TRUE;
 }

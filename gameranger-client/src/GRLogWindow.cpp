@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "GRLogWindow.h"
 #include "GRMainWindow.h"
+#include "memdebug.h"
 
 GRLogWindow::GRLogWindow(const wxString &title, const wxPoint &pos, const wxSize &size)
 		: wxFrame((wxFrame *) NULL, -1, title, pos, size)

@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRLogWindow.h"
 #include "GRIcon.h"
 #include "GRIconCache.h"
+#include "memdebug.h"
 
 GRLobby::GRLobby(wxString name, wxUint32 ID, wxUint8 type)
 {
