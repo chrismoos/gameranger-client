@@ -45,7 +45,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRChangeMyGames.h"
 #include "memdebug.h"
 
-//#define LOG_PACKETS
+#define LOG_PACKETS
 
 
 GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSize &size)
@@ -243,8 +243,8 @@ void GRMainWindow::Login(char *email, char *password)
 	testPacket(wxT("data/00000019.bin"));
 	testPacket(wxT("data/0000001A.bin"));
 	testPacket(wxT("data/0000000A.bin"));
-	testPacket(wxT("data/00000038.bin"));*/
-	//testPacket(wxT("data/00000040.bin"));
+	testPacket(wxT("data/00000038.bin"));
+	testPacket(wxT("data/0000005F.bin"));*/
 	//testPacket(wxT("data/000000D1.bin"));
 	//testPacket(wxT("data/000000D3.bin"));
 	//testPacket(wxT("data/0000000B.bin"));
@@ -575,13 +575,13 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 		break;
 
 		case GAME_ROOM_FULL:
-			msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join is full, please try again later."), wxT("Join room errord"), wxICON_ERROR);
+			msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join is full, please try again later."), wxT("Join room error"), wxICON_ERROR);
 			msgDlg->ShowModal();
 			delete(msgDlg);
 		break;
 
 		case GAME_ROOM_NO_LATE_JOINERS:
-			msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join does not allow late joiners."), wxT("Join room errord"), wxICON_ERROR);
+			msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join does not allow late joiners."), wxT("Join room error"), wxICON_ERROR);
 			msgDlg->ShowModal();
 			delete(msgDlg);
 		break;
@@ -620,6 +620,10 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 
 		case APP_BANNER:
 			appBanner(Packet);
+		break;
+
+		case GAME_ROOM_STATUS_CHANGED:
+			gameRoomStatusChanged(Packet);
 		break;
 
 		default:
@@ -1324,11 +1328,26 @@ void GRMainWindow::addGameRoom(wxUint32 gameRoomID, wxUint32 gameCode, wxUint32 
 	{
 		gameRoomList->SetItem(index, 5, wxT(""), -1);
 	}
-	
 
 	room = new GRGameRoom(gameRoomID, plugin, maxPlayers, currentPlayers, ip, locked, description, grID, iconID, status, host);
+
+	logWindow->logText(wxString::Format(wxT("Locked: %d\n"), room->locked));
+	//check if it's locked
+	if(room->isLocked())
+	{
+		#ifdef WIN32 //windows won't show subitem images correctly, so just display text
+		gameRoomList->SetItem(index, 6, wxT("Yes"), -1);
+		#else
+		gameRoomList->SetItem(index, 6, wxT(""), 3);
+		#endif
+	}
+
+
 	gameRoomList->SetItemData(index, (long)room);
 	GameRooms.push_back(room);
+
+	//update list info with some bold/idle stuff
+	setGameRoomListInfo(room);
 
 	if(announce == true) 
 	{	
@@ -2682,6 +2701,85 @@ void GRMainWindow::OnChangeMyGamesMenu(wxCommandEvent &event)
 	changeGames->Show(true);
 }
 //----------------------------------------------------------------------------------
+void GRMainWindow::gameRoomStatusChanged(GR_PACKET *Packet)
+{
+	GR_ROOM_STATUS_CHANGED *pck;
+	GRGameRoom *room = NULL;
+	wxInt32 index;
+	int x;
+
+	pck = (GR_ROOM_STATUS_CHANGED*)Packet->payload;
+
+	//endian conversion
+	pck->roomID = wxUINT32_SWAP_ON_LE(pck->roomID);
+	pck->status = wxUINT32_SWAP_ON_LE(pck->status);
+
+	//find game room
+	for(x = 0; x < GameRooms.size(); x++)
+	{
+		if(GameRooms[x]->gameRoomID == pck->roomID)
+		{
+			room = GameRooms[x];
+			break;
+		}
+	}
+
+	//if we couldn't find this game room, let's exit
+	if(room == NULL) return;
+
+	//get list item
+	index = getGameItemIndex(room);
+	if(index == -1) return;
+
+	//update game room and list item
+	room->status = pck->status;
+	if(pck->status > 3) 
+	{
+		#ifdef WIN32 //windows won't show subitem images correctly, so just display text
+		gameRoomList->SetItem(index, 5, wxT("Yes"), -1);
+		#else
+		gameRoomList->SetItem(index, 5, wxT(""), 2);
+		#endif
+	}
+	else  
+	{
+		gameRoomList->SetItem(index, 5, wxT(""), -1);
+	}
+
+	//update list item
+	setGameRoomListInfo(room);
+
+}
+//------------------------------------------------------------------------------------
+void GRMainWindow::setGameRoomListInfo(GRGameRoom *gameRoom)
+{
+	wxListItem info;
+	wxInt32 index;
+	wxColor color;
+	wxFont font;
+
+	index = getGameItemIndex(gameRoom);
+	if(index == -1) 
+	{
+		return;
+	}
+
+	info.SetId(index);
+	gameRoomList->GetItem(info);
+
+	if(gameRoom->isPremium()) font.SetWeight(wxBOLD);
+	if(gameRoom->isIdle()) info.SetTextColour(*wxLIGHT_GREY);
+
+    info.m_mask = wxLIST_MASK_TEXT;
+	info.m_text = gameRoom->host;
+    info.m_itemId = index;
+    info.m_col = 1;
+	info.SetFont(font);
+    
+	gameRoomList->SetItem(info);
+
+}
+//---------------------------------------------------------------------------
 
 
 

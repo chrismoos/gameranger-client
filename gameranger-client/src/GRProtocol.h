@@ -75,6 +75,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define USER_IS_IDLE 0x43
 #define USER_IS_ACTIVE 0x44
 #define GAME_ROOM_NO_LATE_JOINERS 0x5E
+#define GAME_ROOM_STATUS_CHANGED 0x5F
 #define CHANGE_ACCOUNT_PASSWORD 0x52
 #define PASSWORD_CHANGE_SUCCESSFUL 0x53
 #define PM_ERROR_USER_IN_GAME 0x5D
@@ -116,6 +117,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define REGULAR_PLAYING_IDLE 9
 #define PREMIUM_PLAYING_NOT_IDLE 10
 #define PREMIUM_PLAYING_IDLE 11
+
+//=================================================
+//Game Room Status
+//=================================================
+#define NOT_LOCKED_NO_LATE 0x00
+#define LOCKED_NO_LATE 0x01
+#define NOT_LOCKED_LATE 0x02
+#define LOCKED_LATE 0x03
+#define PLAYING_NOT_LOCKED 0x04
+#define PLAYING_LOCKED_NO_LATE 0x05
+#define PLAYING_NOT_LOCKED_LATE 0x06
+#define PLAYING_LOCKED_LATE 0x07
+
 
 //=================================================
 //Packet Structure
@@ -219,6 +233,14 @@ struct GR_USER_INFO_HEADER {
 struct GR_USER_CHANGED_ICON_PACKET {
 	wxUint32 userID;
 	wxUint32 iconID;
+};
+
+//==================================================
+//Game Room Status Changed Packet
+//==================================================
+struct GR_ROOM_STATUS_CHANGED {
+	wxUint32 roomID;
+	wxUint32 status;
 };
 
 #endif

@@ -181,6 +181,8 @@ public:
 	void updateGameRoomPlayerCountString(GRGameRoom *room);
 	void playerLeftGameRoom(GR_PACKET *Packet);
 	void gameRoomUserList(GR_PACKET *Packet);
+	void gameRoomStatusChanged(GR_PACKET *Packet);
+	void setGameRoomListInfo(GRGameRoom *gameRoom);
 
 	//Plugins
 	void loadPlugins();

@@ -70,3 +70,12 @@ bool GRGameRoom::isIdle()
 	else return false;
 }
 //----------------------------------------------------------------
+bool GRGameRoom::isLocked()
+{
+	if(locked == LOCKED_NO_LATE || locked == LOCKED_LATE || locked == PLAYING_LOCKED_LATE || locked == PLAYING_LOCKED_NO_LATE)
+	{
+		return true;
+	}
+	else return false;
+}
+//----------------------------------------------------------------

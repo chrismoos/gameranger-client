@@ -1,3 +1,6 @@
+Process game close when we are in game room.
+Right click user in game room.
+Game status.
 Ladders
 Game room icon update
 Game room nickname update

@@ -51,6 +51,7 @@ public:
 	bool isPremium();
 	bool isPlaying();
 	bool isIdle();
+	bool isLocked();
 
 };
 
