@@ -1,0 +1,10 @@
+Known Bugs
+
+Version 0.3 - 
+
+Sorting on linux doesen't work.
+
+
+Verison 0.2 -
+
+Sorting on linux doesen't work.

@@ -1,0 +1,48 @@
+---------------------------------------------
+Gameranger Client
+Change Log
+---------------------------------------------
+
+Version 0.3 -
+
+New features:
+Join game rooms
+Game room chat
+Change nickname
+Change real name
+
+Verison 0.2 -
+
+Fixed: 
+Error with list control indexes.
+Crashing when pressing enter in main chat. 
+Fixed message of the day on linux.
+
+New Features:
+Public Lobby Chat
+Private Messages
+User icons
+Sorted game room list by game name
+Sorted user list alphabetically
+
+
+Version 0.1 - 
+
+Initial Release. 
+
+Completed features:
+
+Registration
+Login
+Game Room List
+User List
+Public Lobby List
+Message of the Day
+User status(Idle/Active)
+Public lobby chat
+Users leaving and joining rooms
+Changing lobbies
+
+
+
+
