@@ -76,7 +76,7 @@ class GRRegWindow : public wxFrame
 
 		//Events
 		void changePage(wxWizardEvent &event);
-		void cancelWizard(wxCommandEvent &event);
+		void cancelWizard(wxWizardEvent &event);
 
 		//Socket
 		bool connecting;

@@ -136,7 +136,7 @@ void GRRegWindow::changePage(wxWizardEvent &event)
 	}
 }
 //--------------------------------------------------------------------------
-void GRRegWindow::cancelWizard(wxCommandEvent &event)
+void GRRegWindow::cancelWizard(wxWizardEvent &event)
 {		
 	this->Close(true);
 }
