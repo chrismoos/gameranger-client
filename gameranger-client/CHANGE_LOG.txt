@@ -9,6 +9,8 @@ Added memory leak detection for Visual studio.
 Fixed problem with random mac addresses.
 Fixed a problem with first time e-mail based logins.
 Fixed a memory leak when changing rooms.
+Added late joiners error when you try to join a room.
+Added game room full error when you try to join a room.
 
 
 Version 0.3 -

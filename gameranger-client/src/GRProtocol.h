@@ -47,6 +47,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define GAME_ROOM_OPENED 0x19
 #define GAME_ROOM_CLOSED 0x1A
 #define JOIN_GAME_ROOM 0x1B
+#define GAME_ROOM_FULL 0x1D
+#define GAME_ROOM_INVALID_PASSWORD 0x1E
 #define GAME_ROOM_USER_LIST 0x1F
 #define PLAYER_JOINED_GAME_ROOM 0x20
 #define PLAYER_LEFT_GAME_ROOM 0x21
@@ -67,6 +69,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define CHANGE_REAL_NAME 0x3B
 #define USER_IS_IDLE 0x43
 #define USER_IS_ACTIVE 0x44
+#define GAME_ROOM_NO_LATE_JOINERS 0x5E
 #define SERVER_MESSAGE 0x62
 #define USER_IN_GAME 0x63
 #define USER_NOT_IN_GAME 0x64

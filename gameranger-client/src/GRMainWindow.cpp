@@ -507,6 +507,18 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 		case GAME_ROOM_CHAT_MESSAGE:
 			if(currentGameRoom != NULL) currentGameRoom->chatMessage(Packet, 0);
 		break;
+
+		case GAME_ROOM_FULL:
+			wxMessageDialog *msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join is full, please try again later."), wxT("Join room errord"), wxICON_ERROR);
+			msgDlg->ShowModal();
+			delete(msgDlg);
+		break;
+
+		case GAME_ROOM_NO_LATE_JOINERS:
+			wxMessageDialog *msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join does not allow late joiners."), wxT("Join room errord"), wxICON_ERROR);
+			msgDlg->ShowModal();
+			delete(msgDlg);
+		break;
 	}
 }
 //------------------------------------------------------------------------------
