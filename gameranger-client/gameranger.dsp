@@ -91,6 +91,10 @@ SOURCE=.\gameranger.rc
 # End Source File
 # Begin Source File
 
+SOURCE=.\src\GRChangeIconWindow.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\src\GRConnecStatusWindow.cpp
 # End Source File
 # Begin Source File
@@ -176,6 +180,10 @@ SOURCE=.\src\Main.cpp
 # Begin Source File
 
 SOURCE=.\src\GRBaseDefs.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\GRChangeIconWindow.h
 # End Source File
 # Begin Source File
 

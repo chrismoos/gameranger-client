@@ -66,6 +66,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define USER_CHANGED_NICKNAME 0x36
 #define REQUEST_ICON_DATA 0x37
 #define RECEIVED_ICON_DATA 0x38
+#define CHANGE_ICON 0x39
+#define USER_CHANGED_ICON 0x3A
 #define CHANGE_REAL_NAME 0x3B
 #define GET_USER_INFO 0x3E
 #define REG_USER_INFO 0x40
@@ -74,6 +76,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define GAME_ROOM_NO_LATE_JOINERS 0x5E
 #define CHANGE_ACCOUNT_PASSWORD 0x52
 #define PASSWORD_CHANGE_SUCCESSFUL 0x53
+#define PM_ERROR_USER_IN_GAME 0x5D
 #define SERVER_MESSAGE 0x62
 #define USER_IN_GAME 0x63
 #define USER_NOT_IN_GAME 0x64
@@ -199,6 +202,14 @@ struct GR_USER_INFO_HEADER {
 	wxUint32 idleSince;
 	wxUint32 iconID;
 	wxUint8 location[12];
+};
+
+//==================================================
+//User Changed Icon Packet
+//==================================================
+struct GR_USER_CHANGED_ICON_PACKET {
+	wxUint32 userID;
+	wxUint32 iconID;
 };
 
 #endif

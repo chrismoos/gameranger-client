@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "GRProtocol.h"
 
-#define SHOW_LOG_WINDOW
+//#define SHOW_LOG_WINDOW
 
 #include <wx/wxprec.h>
 #include <wx/file.h>

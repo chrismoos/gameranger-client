@@ -95,6 +95,7 @@ public:
 	void OnChangePassword(wxCommandEvent &event);
 	void OnUserRightClick(wxListEvent &event);
 	void OnUserListGetInfo(wxCommandEvent &event);
+	void OnChangeIconMenu(wxCommandEvent &event);
 
 	//User List Box Helpers
 	wxInt32 getUserItemIndex(GRUser *user);
@@ -187,6 +188,7 @@ public:
 	void requestMissingIconsFromUserList(wxUint32 count);
 	void requestIcon(wxUint32 iconID);
 	void purgeIcons();
+	void userChangedIcon(GR_PACKET *Packet);
 	void receivedIconData(GR_PACKET *Packet);
 	GRIconCache *iconCache;
 
@@ -250,7 +252,8 @@ enum {
 	USERLISTBOX_ID,
 	GAMELIST_ID,
 	FILE_MENU_LOGOUT,
-	USER_LIST_MENU_GET_INFO
+	USER_LIST_MENU_GET_INFO,
+	CHANGE_ICON_MENU_ITEM
 };
 
 #endif

@@ -39,9 +39,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRUserInfo.h"
 #include "GRUserInfoWindow.h"
 #include "GRPremiumUserInfo.h"
+#include "GRChangeIconWindow.h"
 #include "memdebug.h"
 
-#define LOG_PACKETS
+//#define LOG_PACKETS
 
 
 GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSize &size)
@@ -71,6 +72,7 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 	optionsMenu->Append(CHANGE_NICK_MENU_ITEM, wxT("Change &nickname"));
 	optionsMenu->Append(CHANGE_NAME_MENU_ITEM, wxT("Change &real name"));
 	optionsMenu->Append(CHANGE_PASSWORD_MENU_ITEM, wxT("Change &password"));
+	optionsMenu->Append(CHANGE_ICON_MENU_ITEM, wxT("Change &icon"));
 
 	aboutMenu = new wxMenu();
 	aboutMenu->Append(ABOUT_MENU_ABOUT, wxT("&About"));
@@ -577,6 +579,12 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 			delete(msgDlg);
 		break;
 
+		case PM_ERROR_USER_IN_GAME:
+			msgDlg = new wxMessageDialog(this, wxT("Error: The user you are trying to private message is in a game."), wxT("Private Message Error"), wxICON_INFORMATION);
+			msgDlg->ShowModal();
+			delete(msgDlg);
+		break;
+
 		case REG_USER_INFO:
 			regularUserInfo(Packet);
 		break;
@@ -587,6 +595,10 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 
 		case RECV_PREMIUM_USER_IMAGE:
 			recvPremiumUserImage(Packet);
+		break;
+
+		case USER_CHANGED_ICON:
+			userChangedIcon(Packet);
 		break;
 
 		default:
@@ -2360,6 +2372,43 @@ void GRMainWindow::recvPremiumUserImage(GR_PACKET *Packet)
 	delete(img);
 }
 //-----------------------------------------------------------------------------------
+void GRMainWindow::OnChangeIconMenu(wxCommandEvent &event)
+{
+	GRChangeIconWindow *changeIcon = new GRChangeIconWindow(this, wxT("Change icon"), wxDefaultPosition, wxDefaultSize);
+	changeIcon->m_mainWindow = this;
+	changeIcon->Show(true);
+}
+//-----------------------------------------------------------------------------------
+void GRMainWindow::userChangedIcon(GR_PACKET *Packet)
+{
+	GR_USER_CHANGED_ICON_PACKET *pck;
+	GRIcon *icon;
+	GRUser *user;
+	int imageIndex;
+	pck = (GR_USER_CHANGED_ICON_PACKET*)Packet->payload;
+
+	pck->userID = wxUINT32_SWAP_ON_LE(pck->userID);
+	pck->iconID = wxUINT32_SWAP_ON_LE(pck->iconID);
+	
+	if(currentLobby == NULL) return;
+	user = currentLobby->findUser(pck->userID);
+	user->iconID = pck->iconID;
+
+	icon = iconCache->findIcon(pck->iconID);
+	user->icon = icon;
+	if(icon == NULL) 
+	{
+		imageIndex = 0;
+		if(pck->iconID != 0)requestIcon(pck->iconID);
+	}
+	else 
+	{
+		imageIndex = icon->imageIndex;
+		userListBox->SetItemImage(getUserItemIndex(user), user->icon->imageIndex, user->icon->imageIndex);
+	}
+
+}
+//-------------------------------------------------------------------------------
 
 
 

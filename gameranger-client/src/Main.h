@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRRegWindow.h"
 #include "GRPrivateMessage.h"
 #include "GRGameRoomWindow.h"
+#include "GRChangeIconWindow.h"
 
 class GRMainWindow;
 
@@ -69,6 +70,7 @@ BEGIN_EVENT_TABLE(GRMainWindow, wxFrame)
 	EVT_MENU(CHANGE_NICK_MENU_ITEM, GRMainWindow::OnChangeNickMenu)
 	EVT_MENU(CHANGE_NAME_MENU_ITEM, GRMainWindow::OnChangeNameMenu)
 	EVT_MENU(USER_LIST_MENU_GET_INFO, GRMainWindow::OnUserListGetInfo)
+	EVT_MENU(CHANGE_ICON_MENU_ITEM, GRMainWindow::OnChangeIconMenu)
 	EVT_SOCKET(SOCKET_ID1, GRMainWindow::OnSocketEvent)
 	EVT_COMBOBOX(COMBOBOX_ID, GRMainWindow::OnComboBoxSelect)
 	EVT_TIMER(TIMER_ID, GRMainWindow::OnTimer)
@@ -76,6 +78,11 @@ BEGIN_EVENT_TABLE(GRMainWindow, wxFrame)
 	EVT_LIST_ITEM_ACTIVATED(USERLISTBOX_ID, GRMainWindow::OnUserDoubleClick)
 	EVT_LIST_ITEM_RIGHT_CLICK(USERLISTBOX_ID, GRMainWindow::OnUserRightClick)
 	EVT_LIST_ITEM_ACTIVATED(GAMELIST_ID, GRMainWindow::OnGameRoomDoubleClick)
+END_EVENT_TABLE()
+
+BEGIN_EVENT_TABLE(GRChangeIconWindow, wxFrame)
+	EVT_BUTTON(LOAD_BUTTON_ID, GRChangeIconWindow::OnLoadIcon)
+	EVT_BUTTON(CHANGE_ICON_BUTTON_ID, GRChangeIconWindow::OnChangeIcon)
 END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE(GRPrivateMessage, wxFrame)

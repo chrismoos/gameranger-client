@@ -17,6 +17,11 @@ Added change password option.
 Added regular user info.
 Added premium user info.
 
+12/23/04 -
+
+Added updating of user icon in user lists.
+Added change icon support.
+
 
 Version 0.3 -
 
