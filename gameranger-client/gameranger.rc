@@ -14,6 +14,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 // English (U.S.) resources
+1 24 "winxp.manifest"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE 9, 1
