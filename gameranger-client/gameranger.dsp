@@ -64,8 +64,8 @@ LINK32=link.exe
 # PROP Output_Dir "gameranger___Win32_Debug"
 # PROP Intermediate_Dir "gameranger___Win32_Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ  /c
-# ADD CPP /nologo /MDd /W4 /Gm /GX /Zi /Od /I "C:\wxWindows-2.4.2/lib/mswd" /I "C:\wxWindows-2.4.2/include" /I "C:\wxWindows-2.4.2/contrib/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "_WINDOWS" /D WINVER=0x400 /D "_MT" /D wxUSE_GUI=1 /D "__WXDEBUG__" /D WXDEBUG=1 /Fp"Debug/gameranger.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ   /c
+# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
+# ADD CPP /nologo /MDd /W4 /Gm /GX /Zi /Od /I "C:\wxWindows-2.4.2/lib/mswd" /I "C:\wxWindows-2.4.2/include" /I "C:\wxWindows-2.4.2/contrib/include" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /D "_WINDOWS" /D WINVER=0x400 /D "_MT" /D wxUSE_GUI=1 /D "__WXDEBUG__" /D WXDEBUG=1 /Fp"Debug/gameranger.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /i "C:\wxWindows-2.4.2/include" /d "_DEBUG"
 BSC32=bscmake.exe
@@ -131,6 +131,14 @@ SOURCE=.\src\GRPlugin.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\src\GRPremiumUserInfo.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\GRPremiumUserInfoWindow.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\src\GRPrivateMessage.cpp
 # End Source File
 # Begin Source File
@@ -148,6 +156,14 @@ SOURCE=.\src\GRSecurity.cpp
 # Begin Source File
 
 SOURCE=.\src\GRUser.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\GRUserInfo.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\GRUserInfoWindow.cpp
 # End Source File
 # Begin Source File
 
@@ -203,6 +219,14 @@ SOURCE=.\src\GRPlugin.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\src\GRPremiumUserInfo.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\GRPremiumUserInfoWindow.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\src\GRPrivateMessage.h
 # End Source File
 # Begin Source File
@@ -224,6 +248,14 @@ SOURCE=.\src\GRSecurity.h
 # Begin Source File
 
 SOURCE=.\src\GRUser.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\GRUserInfo.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\GRUserInfoWindow.h
 # End Source File
 # Begin Source File
 

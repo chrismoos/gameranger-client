@@ -38,6 +38,7 @@ class GRIcon;
 class GRPrivateMessage;
 class GRRegWindow;
 class GRGameRoomWindow;
+class GRPremiumUserInfoWindow;
 
 using namespace std;
 
@@ -65,6 +66,10 @@ public:
 	wxImageList *imgList;
 	wxImageList *iconImgList;
 	wxStatusBar *statusBar;
+	wxMenu *popupMenu;
+
+	//Cleanup
+	void cleanupGR();
 
 	void createControls();
 
@@ -76,6 +81,7 @@ public:
 
 	//Events
 	void MenuExit();
+	void MenuLogout();
 	void OnComboBoxSelect(wxCommandEvent &event);
 	void OnTimer();
 	void OnChatEditEnter(wxCommandEvent &event);
@@ -86,6 +92,9 @@ public:
 	void OnGameRoomDoubleClick(wxListEvent& event);
 	void OnChangeNickMenu(wxCommandEvent &event);
 	void OnChangeNameMenu(wxCommandEvent &event);
+	void OnChangePassword(wxCommandEvent &event);
+	void OnUserRightClick(wxListEvent &event);
+	void OnUserListGetInfo(wxCommandEvent &event);
 
 	//User List Box Helpers
 	wxInt32 getUserItemIndex(GRUser *user);
@@ -190,6 +199,17 @@ public:
 	vector <GRGameRoomWindow*> gameRoomWindows;
 	GRGameRoomWindow *currentGameRoom;
 
+	//User Info
+	void regularUserInfo(GR_PACKET *Packet);
+	void premiumUserInfo(GR_PACKET *Packet);
+	void requestPicture(wxUint32 pictureID);
+	GRPremiumUserInfoWindow *currentPremiumInfoWindow;
+	void recvPremiumUserImage(GR_PACKET *Packet);
+
+	//Log Packets
+	void logPacket(wxUint8 *buf, wxUint32 len);
+	wxUint8 *createRawPacket(wxUint32 command, wxUint32 len, wxUint8 *payload);
+
 
 	char GRemail[128];
 	char GRpassword[128];
@@ -228,7 +248,9 @@ enum {
 	CHANGE_NAME_MENU_ITEM,
 	CHANGE_PASSWORD_MENU_ITEM,
 	USERLISTBOX_ID,
-	GAMELIST_ID
+	GAMELIST_ID,
+	FILE_MENU_LOGOUT,
+	USER_LIST_MENU_GET_INFO
 };
 
 #endif

@@ -26,8 +26,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 GRIconCache::GRIconCache()
 {
 	GRIcon *defaultIcon = new GRIcon();
+	wxString path = wxGetCwd();
+	wxBitmap pic3(path+wxT("/images/defaulticon.xpm"), wxBITMAP_TYPE_XPM);
 	defaultIcon->SetIconID(0);
 	defaultIcon->imageIndex = 0;
+	defaultIcon->image = new wxImage(pic3);
 	Icons.push_back(defaultIcon);
 }
 //-----------------------------------------------------------------------

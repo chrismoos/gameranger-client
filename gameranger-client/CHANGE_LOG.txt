@@ -11,6 +11,11 @@ Fixed a problem with first time e-mail based logins.
 Fixed a memory leak when changing rooms.
 Added late joiners error when you try to join a room.
 Added game room full error when you try to join a room.
+Fixed a problem where logging occured even when the log window was not visible.
+Added logout menu under file.
+Added change password option.
+Added regular user info.
+Added premium user info.
 
 
 Version 0.3 -

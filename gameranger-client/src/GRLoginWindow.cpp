@@ -48,6 +48,10 @@ GRLoginWindow::~GRLoginWindow()
 {
 	wxUint32 x;
 	for(x = 0; x < Profiles.size(); x++) delete(Profiles[x]);
+	if(mainWindow != NULL) 
+	{
+		mainWindow->loginWindow = NULL;
+	}
 }
 //-------------------------------------------------------------------------------
 void GRLoginWindow::createControls()

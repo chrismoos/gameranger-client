@@ -53,7 +53,9 @@ void GRLogWindow::logText(wxString str)
 	
 	temp = str + wxT("\n");
 
+#ifdef SHOW_LOG_WINDOW
 	textLog->AppendText(temp);
+#endif
 }
 //------------------------------------------------------------------------------
 void GRLogWindow::logData(wxUint8 *buf, wxUint32 length)
@@ -68,8 +70,9 @@ void GRLogWindow::logData(wxUint8 *buf, wxUint32 length)
 	}
 
 	temp += wxT("\n\n");
-
+#ifdef SHOW_LOG_WINDOW
 	textLog->AppendText(temp);
+#endif
 }
 //------------------------------------------------------------------------------
 

@@ -67,9 +67,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define REQUEST_ICON_DATA 0x37
 #define RECEIVED_ICON_DATA 0x38
 #define CHANGE_REAL_NAME 0x3B
+#define GET_USER_INFO 0x3E
+#define REG_USER_INFO 0x40
 #define USER_IS_IDLE 0x43
 #define USER_IS_ACTIVE 0x44
 #define GAME_ROOM_NO_LATE_JOINERS 0x5E
+#define CHANGE_ACCOUNT_PASSWORD 0x52
+#define PASSWORD_CHANGE_SUCCESSFUL 0x53
 #define SERVER_MESSAGE 0x62
 #define USER_IN_GAME 0x63
 #define USER_NOT_IN_GAME 0x64
@@ -83,6 +87,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define INVALID_ACCOUNT 0xC8
 #define INVALID_LOGIN_PASSWORD 0xCA
 #define SERVER_VERIFY_ACK 0xD0
+#define PREMIUM_USER_INFO 0xD1
+#define GET_PREMIUM_USER_IMAGE 0xD2
+#define RECV_PREMIUM_USER_IMAGE 0xD3
 #define GR_LADDERS 0xF9
 
 //=================================================
@@ -180,6 +187,18 @@ struct GR_GAME_ROOM_PACKET {
 	wxUint32 maxPlayers;
 	wxUint8 ipAddress[4];
 	wxUint32 padding;
+};
+
+//==================================================
+//User Info Packet Header
+//==================================================
+struct GR_USER_INFO_HEADER {
+	wxUint32 userID;
+	wxUint32 lastLogin;
+	wxUint32 lastLogout;
+	wxUint32 idleSince;
+	wxUint32 iconID;
+	wxUint8 location[12];
 };
 
 #endif

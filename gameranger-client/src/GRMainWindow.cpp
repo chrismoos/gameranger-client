@@ -19,6 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <wx/mstream.h>
 #include "GRMainWindow.h"
 #include "GRLoginWindow.h"
 #include "GRLogWindow.h"
@@ -33,8 +34,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRGameRoom.h"
 #include "GRRegWindow.h"
 #include "GRPrivateMessage.h"
+#include "GRPremiumUserInfoWindow.h"
 #include "GRGameRoomWindow.h"
+#include "GRUserInfo.h"
+#include "GRUserInfoWindow.h"
+#include "GRPremiumUserInfo.h"
 #include "memdebug.h"
+
+#define LOG_PACKETS
 
 
 GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSize &size)
@@ -47,18 +54,23 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 	//Create Menu Bar
 	fileMenu = new wxMenu();
 	fileMenu->Append(FILE_MENU_EXIT, wxT("E&xit"));
+	fileMenu->Append(FILE_MENU_LOGOUT, wxT("&Logout"));
+	fileMenu->Enable(FILE_MENU_LOGOUT, false);
 	
 	//Accounts Bar
 	accountsMenu = new wxMenu();
 	accountsMenu->Append(REGISTER_MENU_ITEM, wxT("&Register"));
 	accountsMenu->Append(LOGIN_MENU_ITEM, wxT("&Login"));
 
+	//User list box popup menu
+	popupMenu = new wxMenu();
+    popupMenu->Append(USER_LIST_MENU_GET_INFO, wxT("Get &user info"));
+
 	//Options Menu
 	optionsMenu = new wxMenu();
 	optionsMenu->Append(CHANGE_NICK_MENU_ITEM, wxT("Change &nickname"));
 	optionsMenu->Append(CHANGE_NAME_MENU_ITEM, wxT("Change &real name"));
 	optionsMenu->Append(CHANGE_PASSWORD_MENU_ITEM, wxT("Change &password"));
-	optionsMenu->Enable(CHANGE_PASSWORD_MENU_ITEM, false);
 
 	aboutMenu = new wxMenu();
 	aboutMenu->Append(ABOUT_MENU_ABOUT, wxT("&About"));
@@ -75,6 +87,8 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 	/* ---------------------------- Create Controls --------------------------- */
 	wxString path = wxGetCwd();
 
+
+	wxInitAllImageHandlers();
 
 	//Image List
 	imgList = new wxImageList(16, 16);
@@ -133,6 +147,7 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 
 	currentProfile = 0;
 	currentGameRoom = 0;
+	currentPremiumInfoWindow = NULL;
 
 }
 //-------------------------------------------------------------------------------------
@@ -145,31 +160,19 @@ GRMainWindow::~GRMainWindow()
 
 	/* Destroy socket */
 	delete(m_socket);
+	
+	/* delete popup menu */
+	delete(popupMenu);
 
 	
-	for(x = 0; x < Lobbies.size(); x++)
-	{
-		delete(Lobbies[x]);
-	}
+	cleanupGR();
+
+
 	for(x = 0; x < Plugins.size(); x++)
 	{
 		delete(Plugins[x]);
 	}
-	for(x = 0; x < GameRooms.size(); x++)
-	{
-		delete(GameRooms[x]);
-	}
-	for(x = 0; x < privateMessages.size(); x++)
-	{
-		delete(privateMessages[x]);
-	}
-	for(x = 0; x < gameRoomWindows.size(); x++)
-	{
-		delete(gameRoomWindows[x]);
-	}
-
-
-	if(colorTable != NULL) delete[] colorTable;
+	Plugins.clear();
 
 	if(iconCache != NULL) 
 	{
@@ -177,6 +180,33 @@ GRMainWindow::~GRMainWindow()
 		delete(iconCache);
 	}
 
+	if(colorTable != NULL) delete[] colorTable;
+
+}
+//------------------------------------------------------------------------------------
+void GRMainWindow::cleanupGR()
+{
+	int x;
+	for(x = 0; x < Lobbies.size(); x++)
+	{
+		delete(Lobbies[x]);
+	}
+	Lobbies.clear();
+	for(x = 0; x < GameRooms.size(); x++)
+	{
+		delete(GameRooms[x]);
+	}
+	GameRooms.clear();
+	for(x = 0; x < privateMessages.size(); x++)
+	{
+		delete(privateMessages[x]);
+	}
+	privateMessages.clear();
+	for(x = 0; x < gameRoomWindows.size(); x++)
+	{
+		delete(gameRoomWindows[x]);
+	}
+	gameRoomWindows.clear();
 }
 //------------------------------------------------------------------------------------
 void GRMainWindow::Login(char *email, char *password)
@@ -186,14 +216,17 @@ void GRMainWindow::Login(char *email, char *password)
 	strcpy(GRpassword, password);
 	connectToServer();
 
-/*	logWindow->Show(true);
-	testPacket(wxT("data/000F.bin"));
-	testPacket(wxT("data/0013.bin"));
-	testPacket(wxT("data/00BC.bin"));
-	testPacket(wxT("data/0019.bin"));
-	testPacket(wxT("data/001A.bin"));
-	testPacket(wxT("data/000A.bin"));
-	testPacket(wxT("data/0038.bin"));*/
+/*	testPacket(wxT("data/0000000F.bin"));
+	testPacket(wxT("data/00000013.bin"));
+	testPacket(wxT("data/000000BC.bin"));
+	testPacket(wxT("data/00000019.bin"));
+	testPacket(wxT("data/0000001A.bin"));
+	testPacket(wxT("data/0000000A.bin"));
+	testPacket(wxT("data/00000038.bin"));
+	testPacket(wxT("data/00000040.bin"));
+	testPacket(wxT("data/000000D1.bin"));
+	testPacket(wxT("data/000000D3.bin"));*/
+	
 }
 //-------------------------------------------------------------------------------------
 void GRMainWindow::createControls()
@@ -302,6 +335,7 @@ void GRMainWindow::OnConnect()
 	statusWindow->statusIndicator->SetValue(2);
 	loggedIn = false;
 	packetCounter = 0;
+	fileMenu->Enable(FILE_MENU_LOGOUT, true);
 	timer->Start(360000, false);
 }
 //----------------------------------------------------------------------------------
@@ -318,25 +352,24 @@ void GRMainWindow::OnUnableToConnect()
 //-------------------------------------------------------------------------------
 void GRMainWindow::OnDisconnect()
 {
-	wxUint32 x;
 	logWindow->logText(wxT("Disconnected from GameRanger server"));	
-	m_socket->Close();
+	addTextWithColor(wxT("<< Disconnected from GameRanger >>\n"), *wxRED);
+
+	if(m_socket != NULL) 
+	{
+		m_socket->Close();
+		delete(m_socket);
+		m_socket = NULL;
+	}
 	loggedIn = false;
 	userListBox->DeleteAllItems();
 	gameRoomList->DeleteAllItems();
 	lobbyComboBox->Clear();
 	
-	for(x = 0; x < GameRooms.size(); x++)
-	{
-		delete(GameRooms[x]);
+	cleanupGR();
 
-	}
-	for(x = 0; x < Lobbies.size(); x++) 
-	{
-		delete(Lobbies[x]);
-	}
-	GameRooms.clear();
-	Lobbies.clear();
+	fileMenu->Enable(FILE_MENU_LOGOUT, false);
+
 	timer->Stop();
 	statusWindow->Show(false);
 }
@@ -348,8 +381,18 @@ void GRMainWindow::OnDataAvailable()
 	wxUint32 pos = 0;
 	wxUint8 *payload;
 
+	//make sure we haven't deleted socket(Socket->Close() is delayed)
+	if(m_socket == NULL) return;
+
 	//read in header
 	m_socket->Read(&pckHeader, sizeof(pckHeader));
+
+	//disconnect socket
+	if(m_socket->LastCount() <= 0) 
+	{
+		OnDisconnect();
+		return;
+	}
 
 	//endian conversion
 	pckHeader.command = ntohl(pckHeader.command);
@@ -382,6 +425,12 @@ void GRMainWindow::OnDataAvailable()
 	logWindow->logText(wxString::Format(wxT("Command: %08X\nPayload Length: %d"), pckHeader.command, pckHeader.payloadLength));
 	
 	logWindow->logData(Packet.payload, Packet.header->payloadLength);
+
+#ifdef LOG_PACKETS
+	wxUint8 *raw = createRawPacket(pckHeader.command, pckHeader.payloadLength, payload);
+	logPacket(raw, pckHeader.payloadLength+sizeof(GR_PACKET_HEADER));
+	delete[] raw;
+#endif
 
 
 	handlePacket(&Packet);
@@ -520,6 +569,31 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 			msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join does not allow late joiners."), wxT("Join room errord"), wxICON_ERROR);
 			msgDlg->ShowModal();
 			delete(msgDlg);
+		break;
+
+		case PASSWORD_CHANGE_SUCCESSFUL:
+			msgDlg = new wxMessageDialog(this, wxT("Your password was successfully changed."), wxT("Password change"), wxICON_INFORMATION);
+			msgDlg->ShowModal();
+			delete(msgDlg);
+		break;
+
+		case REG_USER_INFO:
+			regularUserInfo(Packet);
+		break;
+
+		case PREMIUM_USER_INFO:
+			premiumUserInfo(Packet);
+		break;
+
+		case RECV_PREMIUM_USER_IMAGE:
+			recvPremiumUserImage(Packet);
+		break;
+
+		default:
+			if(logWindow != NULL)
+			{
+				logWindow->logText(wxString::Format(wxT("Unknown command: %08X\n"), Packet->header->command));
+			}
 		break;
 	}
 }
@@ -928,6 +1002,13 @@ void GRMainWindow::connectToServer()
 
 	//connect, and don't block
 	connecting = true;
+	if(m_socket == NULL) 
+	{
+		m_socket = new wxSocketClient();
+		m_socket->SetEventHandler(*this, SOCKET_ID1);
+		m_socket->SetNotify(wxSOCKET_INPUT_FLAG | wxSOCKET_CONNECTION_FLAG | wxSOCKET_LOST_FLAG);
+		m_socket->Notify(true);
+	}
 	m_socket->SetFlags(wxSOCKET_WAITALL);
 	m_socket->Connect(addr, false);
 
@@ -2007,7 +2088,278 @@ void GRMainWindow::OnChangeNameMenu(wxCommandEvent &event)
 	sendGRPacket(CHANGE_REAL_NAME, name.Len()+1, (wxUint8*)(const char*)name.mb_str());
 }
 //--------------------------------------------------------------------------------
+void GRMainWindow::MenuLogout()
+{
+	m_socket->Close();
+	delete(m_socket);
+	m_socket = NULL;
+	OnDisconnect();
+}
+//---------------------------------------------------------------------------------
+void GRMainWindow::OnChangePassword(wxCommandEvent &event)
+{
+	wxTextEntryDialog *dlg = new wxTextEntryDialog(this, wxT("Change password"),
+		wxT("New password: "), wxT(""), wxTE_PASSWORD);
+	wxString password;
+	wxUint8 *payload;
+	int len = 0;
 
+	if(dlg->ShowModal() != wxID_OK) //user hit cancel
+	{
+		delete(dlg);
+		return;
+	}
+
+	password = dlg->GetValue();
+	delete(dlg);
+
+	if(password.Len() == 0)
+	{
+		wxMessageDialog *msgdlg = new wxMessageDialog(this, wxT("Your password was not changed, error: You entered a blank password"), wxT("Error changing nickname"), wxICON_ERROR);
+		msgdlg->ShowModal();
+		delete(msgdlg);
+		return;
+	}
+
+	//make packet
+	len = strlen(GRpassword) + password.Len() + 2;
+	payload = new wxUint8[len];
+	strcpy((char*)payload, GRpassword);
+	strcpy((char*)payload+strlen(GRpassword)+1,(const char*)password.mb_str());
+
+	sendGRPacket(CHANGE_ACCOUNT_PASSWORD, len, payload);
+	delete[] payload;
+}
+//--------------------------------------------------------------------------------
+void GRMainWindow::logPacket(wxUint8 *buf, wxUint32 len)
+{
+	wxUint32 command;
+
+	memcpy(&command, buf, sizeof(wxUint32));
+	command = ntohl(command);
+
+	wxFile *file = new wxFile(wxString::Format(wxT("data/%08X.bin"), command), wxFile::write);
+	file->Write(buf, len);
+	file->Close();
+	delete(file);
+}
+//-----------------------------------------------------------------------------
+wxUint8 *GRMainWindow::createRawPacket(wxUint32 command, wxUint32 len, wxUint8 *payload)
+{
+	wxUint8 *buf;
+	wxUint32 command1, length;
+
+	buf = new wxUint8[len+8];
+
+	//host order
+	command1 = htonl(command);
+	length = htonl(len);
+
+	memcpy(buf, (void*)&command1, sizeof(wxUint32));
+	memcpy(buf+sizeof(wxUint32), (void*)&length, sizeof(wxUint32));
+	memcpy(buf+(sizeof(wxUint32)*2), payload, len);
+	
+	return buf;
+}
+//---------------------------------------------------------------------------------
+void GRMainWindow::OnUserRightClick(wxListEvent &event)
+{
+	wxPoint pt;
+	if(event.GetIndex() == -1) return;
+
+	pt = event.GetPoint();
+	userListBox->PopupMenu(popupMenu, pt);
+}
+//----------------------------------------------------------------------------------
+void GRMainWindow::OnUserListGetInfo(wxCommandEvent &event)
+{
+	int index = -1;
+	wxUint32 userID;
+	GRUser *user;
+
+	index = userListBox->GetNextItem(index, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	if(index == -1) return;
+
+
+	user = (GRUser*)userListBox->GetItemData(index);
+	if(user == NULL) return;
+
+	userID = user->userID;
+
+	userID = wxUINT32_SWAP_ON_LE(userID);
+	sendGRPacket(GET_USER_INFO, sizeof(wxUint32), (wxUint8*)&userID);
+}
+//----------------------------------------------------------------------------------
+void GRMainWindow::regularUserInfo(GR_PACKET *Packet)
+{
+	wxUint32 roomID;
+	wxString nickname, realName, email;
+	wxUint8 *ptr;
+	GR_USER_INFO_HEADER infoHeader;
+	GRUserInfo *userInfo;
+	GRUserInfoWindow *infoWindow;
+
+	ptr = Packet->payload;
+
+	//user info header
+	memcpy(&infoHeader, ptr, sizeof(infoHeader));
+	ptr += 32; //sizeof(GR_USER_INFO_HEADER)
+
+	infoHeader.iconID = wxUINT32_SWAP_ON_LE(infoHeader.iconID);
+	infoHeader.idleSince = wxUINT32_SWAP_ON_LE(infoHeader.idleSince);
+	infoHeader.lastLogin = wxUINT32_SWAP_ON_LE(infoHeader.lastLogin);
+	infoHeader.lastLogout = wxUINT32_SWAP_ON_LE(infoHeader.lastLogout);
+	infoHeader.userID = wxUINT32_SWAP_ON_LE(infoHeader.userID);
+
+	//nickname
+	nickname = bufToStr(ptr);
+	ptr += nickname.Len() + 1;
+
+	//real name
+	realName = bufToStr(ptr);
+	ptr += realName.Len() + 1;
+
+	//email
+	email = bufToStr(ptr);
+	ptr += email.Len() + 1;
+
+	//unknown 
+	ptr += 12;
+
+	//current room id
+	memcpy(&roomID, ptr, sizeof(wxUint32));
+	roomID = wxUINT32_SWAP_ON_LE(roomID);
+
+	userInfo = new GRUserInfo(nickname, realName, infoHeader.userID, infoHeader.lastLogin, infoHeader.lastLogout,
+		infoHeader.idleSince, infoHeader.iconID, roomID, infoHeader.location, findLobby(roomID), iconCache->findIcon(infoHeader.iconID), email);
+
+	infoWindow = new GRUserInfoWindow(this, wxT("User Info - ")+nickname, wxDefaultPosition, wxDefaultSize);
+	infoWindow->SetInfo(userInfo);
+	infoWindow->Show(true);
+
+}
+//-----------------------------------------------------------------------------------
+void GRMainWindow::premiumUserInfo(GR_PACKET *Packet)
+{
+	wxUint32 roomID, pictureID, memberSince;
+	wxString nickname, realName, email, accountName, webSite, quote;
+	wxUint16 favGame;
+	wxUint8 *ptr;
+	GR_USER_INFO_HEADER infoHeader;
+	GRPremiumUserInfo *userInfo;
+	GRPremiumUserInfoWindow *infoWindow;
+
+	ptr = Packet->payload;
+
+	//user info header
+	memcpy(&infoHeader, ptr, sizeof(infoHeader));
+	ptr += 32; //sizeof(GR_USER_INFO_HEADER)
+
+	infoHeader.iconID = wxUINT32_SWAP_ON_LE(infoHeader.iconID);
+	infoHeader.idleSince = wxUINT32_SWAP_ON_LE(infoHeader.idleSince);
+	infoHeader.lastLogin = wxUINT32_SWAP_ON_LE(infoHeader.lastLogin);
+	infoHeader.lastLogout = wxUINT32_SWAP_ON_LE(infoHeader.lastLogout);
+	infoHeader.userID = wxUINT32_SWAP_ON_LE(infoHeader.userID);
+
+	//nickname
+	nickname = bufToStr(ptr);
+	ptr += nickname.Len() + 1;
+
+	//real name
+	realName = bufToStr(ptr);
+	ptr += realName.Len() + 1;
+
+	//email
+	email = bufToStr(ptr);
+	ptr += email.Len() + 1;
+
+	//unknown 
+	ptr += 12;
+
+	//current room id
+	memcpy(&roomID, ptr, sizeof(wxUint32));
+	roomID = wxUINT32_SWAP_ON_LE(roomID);
+	ptr += sizeof(wxUint32);
+
+	//account name
+	accountName = bufToStr(ptr);
+	ptr += accountName.Len() + 1;
+
+	//member since
+	memcpy(&memberSince, ptr, sizeof(wxUint32));
+	memberSince = wxUINT32_SWAP_ON_LE(memberSince);
+	ptr += sizeof(wxUint32);
+
+	//webpage
+	webSite = bufToStr(ptr);
+	ptr += webSite.Len() + 1;
+
+	//quote
+	quote = bufToStr(ptr);
+	ptr += quote.Len() + 1;
+
+	//fav game
+	memcpy(&favGame, ptr, sizeof(wxUint16));
+	favGame = wxUINT16_SWAP_ON_LE(favGame);
+	ptr += sizeof(wxUint16);
+
+	//picture id
+	memcpy(&pictureID, ptr, sizeof(wxUint32));
+	pictureID = wxUINT32_SWAP_ON_LE(pictureID);
+	ptr += sizeof(wxUint32);
+
+	/*
+	account name(char*)
+	member since(uint32)
+webpage(char*)
+quote(char*)
+fav game(uint16)
+picture id(uint32)*/
+
+	userInfo = new GRPremiumUserInfo(nickname, realName, infoHeader.userID, infoHeader.lastLogin, infoHeader.lastLogout,
+		infoHeader.idleSince, infoHeader.iconID, roomID, infoHeader.location, findLobby(roomID), iconCache->findIcon(infoHeader.iconID), email,
+		accountName, webSite, quote, memberSince, pictureID, findPluginByCode(favGame));
+
+	logWindow->logText(accountName+wxT(" ")+findPluginByCode(favGame)->gameName);
+	requestPicture(pictureID);
+	infoWindow = new GRPremiumUserInfoWindow(this, wxT("User Info - ")+nickname, wxDefaultPosition, wxDefaultSize);
+	infoWindow->m_mainWindow = this;
+	infoWindow->SetInfo(userInfo);
+	infoWindow->Show(true);
+	currentPremiumInfoWindow = infoWindow;
+
+}
+//-----------------------------------------------------------------------------------
+void GRMainWindow::requestPicture(wxUint32 pictureID)
+{
+	wxUint32 picture;
+
+	picture = pictureID;
+	picture = wxUINT32_SWAP_ON_LE(picture);
+
+	sendGRPacket(GET_PREMIUM_USER_IMAGE, sizeof(wxUint32), (wxUint8*)&picture);
+}
+//-----------------------------------------------------------------------------------
+void GRMainWindow::recvPremiumUserImage(GR_PACKET *Packet)
+{
+	wxUint8 *ptr;
+	wxImage *img = new wxImage();
+	wxMemoryInputStream *buf;
+
+	ptr = Packet->payload + sizeof(wxUint32);
+
+	buf = new wxMemoryInputStream(ptr,Packet->header->payloadLength - sizeof(wxUint32));
+	img->LoadFile(*buf);
+
+	if(currentPremiumInfoWindow != NULL)
+	{	
+		currentPremiumInfoWindow->SetImage(img);
+	}	
+
+	delete(buf);
+	delete(img);
+}
+//-----------------------------------------------------------------------------------
 
 
 
