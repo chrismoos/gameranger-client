@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRPrivateMessage.h"
 #include "GRGameRoomWindow.h"
 #include "GRChangeIconWindow.h"
+#include "GRFindPlayerWindow.h"
+#include "GRChangeMyGames.h"
 
 class GRMainWindow;
 
@@ -71,6 +73,8 @@ BEGIN_EVENT_TABLE(GRMainWindow, wxFrame)
 	EVT_MENU(CHANGE_NAME_MENU_ITEM, GRMainWindow::OnChangeNameMenu)
 	EVT_MENU(USER_LIST_MENU_GET_INFO, GRMainWindow::OnUserListGetInfo)
 	EVT_MENU(CHANGE_ICON_MENU_ITEM, GRMainWindow::OnChangeIconMenu)
+	EVT_MENU(FIND_PLAYER_MENU, GRMainWindow::OnFindPlayerMenu)
+	EVT_MENU(CHANGE_MY_GAMES_ITEM, GRMainWindow::OnChangeMyGamesMenu)
 	EVT_SOCKET(SOCKET_ID1, GRMainWindow::OnSocketEvent)
 	EVT_COMBOBOX(COMBOBOX_ID, GRMainWindow::OnComboBoxSelect)
 	EVT_TIMER(TIMER_ID, GRMainWindow::OnTimer)
@@ -85,12 +89,24 @@ BEGIN_EVENT_TABLE(GRChangeIconWindow, wxFrame)
 	EVT_BUTTON(CHANGE_ICON_BUTTON_ID, GRChangeIconWindow::OnChangeIcon)
 END_EVENT_TABLE()
 
+BEGIN_EVENT_TABLE(GRChangeMyGames, wxFrame)
+	EVT_BUTTON(SAVE_GAME_LIST_BUTTON_ID, GRChangeMyGames::OnSaveGameList)
+	EVT_BUTTON(UNCHECK_ALL_BUTTON_ID, GRChangeMyGames::OnUncheckAll)
+	EVT_BUTTON(CHECK_ALL_BUTTON_ID, GRChangeMyGames::OnCheckAll)
+END_EVENT_TABLE()
+
 BEGIN_EVENT_TABLE(GRPrivateMessage, wxFrame)
 	EVT_TEXT_ENTER(PM_CHATEDIT_ID, GRPrivateMessage::OnChatEditEnter)
 END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE(GRGameRoomWindow, wxFrame)
 	EVT_TEXT_ENTER(GAMEROOM_CHATEDIT_ID, GRGameRoomWindow::OnChatEditEnter)
+	EVT_LIST_ITEM_ACTIVATED(GAMEROOM_USERLIST_ID, GRGameRoomWindow::OnUserDoubleClick)
+END_EVENT_TABLE()
+
+BEGIN_EVENT_TABLE(GRFindPlayerWindow, wxFrame)
+	EVT_BUTTON(SEARCH_BUTTON_ID, GRFindPlayerWindow::OnSearch)
+	EVT_LIST_ITEM_ACTIVATED(RESULTS_LIST_ID, GRFindPlayerWindow::OnUserDoubleClick)
 END_EVENT_TABLE()
 
 

@@ -130,6 +130,12 @@ void GRLobby::userAction(GR_PACKET *Packet)
 			buf += nick.Len() + 1;
 
 			user = new GRUser(nick, userID, iconID);
+
+			//games list
+			mainWindow->parseGamesListForUser(user, buf);
+			buf += *(buf)+1;
+
+			
 			user->SetStatus(status);
 
 			if(prevRoom == 0) 

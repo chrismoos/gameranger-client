@@ -21,6 +21,17 @@ Added premium user info.
 
 Added updating of user icon in user lists.
 Added change icon support.
+Added Find users(by email, account, id, or nickname).
+Added Game Room private messages.
+Added banner support(saves in current directory).
+Added ability to right mouse click on a user and see his games list.
+Added ability to change your games list.
+
+12/24/04 - 
+
+Fixed crash when you finished regisration.
+Fixed crash on logout and exit menu.
+Updated profile to store user's games list.
 
 
 Version 0.3 -

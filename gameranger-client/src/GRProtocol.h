@@ -41,6 +41,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define LOGIN_TO_GAMERANGER 0x08
 #define JOIN_PUBLIC_LOBBY 0x10
 #define BAN_TIME_LEFT 0x0A
+#define APP_BANNER 0x0B
 #define USER_LEFT_SERVER 0x0D
 #define PUBLIC_LOBBY_LIST 0x0F
 #define LOBBY_USER_LIST 0x13
@@ -94,6 +95,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define GET_PREMIUM_USER_IMAGE 0xD2
 #define RECV_PREMIUM_USER_IMAGE 0xD3
 #define GR_LADDERS 0xF9
+
+//=================================================
+//Find User Search Types
+//=================================================
+#define SEARCH_BY_ID 0x00
+#define SEARCH_BY_EMAIL 0x01
+#define SEARCH_BY_NICK 0x02
+#define SEARCH_BY_ACCOUNT 0x03
 
 //=================================================
 //User Status

@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include <wx/mstream.h>
+#include <algorithm>
 #include "GRMainWindow.h"
 #include "GRLoginWindow.h"
 #include "GRLogWindow.h"
@@ -40,6 +41,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRUserInfoWindow.h"
 #include "GRPremiumUserInfo.h"
 #include "GRChangeIconWindow.h"
+#include "GRFindPlayerWindow.h"
+#include "GRChangeMyGames.h"
 #include "memdebug.h"
 
 //#define LOG_PACKETS
@@ -57,15 +60,23 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 	fileMenu->Append(FILE_MENU_EXIT, wxT("E&xit"));
 	fileMenu->Append(FILE_MENU_LOGOUT, wxT("&Logout"));
 	fileMenu->Enable(FILE_MENU_LOGOUT, false);
+
+	//Find Player Menu
+	usersMenu = new wxMenu();
+	usersMenu->Append(FIND_PLAYER_MENU, wxT("&Find Player"));
 	
 	//Accounts Bar
 	accountsMenu = new wxMenu();
 	accountsMenu->Append(REGISTER_MENU_ITEM, wxT("&Register"));
 	accountsMenu->Append(LOGIN_MENU_ITEM, wxT("&Login"));
 
+	//game list menu
+	gameListMenu = new wxMenu();
+
 	//User list box popup menu
 	popupMenu = new wxMenu();
     popupMenu->Append(USER_LIST_MENU_GET_INFO, wxT("Get &user info"));
+	popupMenu->Append(GAMES_LIST_MENU, wxT("Games"), gameListMenu);
 
 	//Options Menu
 	optionsMenu = new wxMenu();
@@ -73,6 +84,7 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 	optionsMenu->Append(CHANGE_NAME_MENU_ITEM, wxT("Change &real name"));
 	optionsMenu->Append(CHANGE_PASSWORD_MENU_ITEM, wxT("Change &password"));
 	optionsMenu->Append(CHANGE_ICON_MENU_ITEM, wxT("Change &icon"));
+	optionsMenu->Append(CHANGE_MY_GAMES_ITEM, wxT("Change My &Games"));
 
 	aboutMenu = new wxMenu();
 	aboutMenu->Append(ABOUT_MENU_ABOUT, wxT("&About"));
@@ -81,6 +93,7 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 	menuBar->Append(fileMenu, wxT("&File"));
 	menuBar->Append(accountsMenu, wxT("&Accounts"));
 	menuBar->Append(optionsMenu, wxT("&Options"));
+	menuBar->Append(usersMenu, wxT("&Users"));
 	menuBar->Append(aboutMenu, wxT("&Help"));
 
 	SetMenuBar(menuBar);
@@ -150,6 +163,7 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 	currentProfile = 0;
 	currentGameRoom = 0;
 	currentPremiumInfoWindow = NULL;
+	searchWindow = NULL;
 
 }
 //-------------------------------------------------------------------------------------
@@ -168,6 +182,11 @@ GRMainWindow::~GRMainWindow()
 
 	
 	cleanupGR();
+
+	if(currentGameRoom != NULL)
+	{
+		currentGameRoom->mainWindow = NULL;
+	}
 
 
 	for(x = 0; x < Plugins.size(); x++)
@@ -224,10 +243,11 @@ void GRMainWindow::Login(char *email, char *password)
 	testPacket(wxT("data/00000019.bin"));
 	testPacket(wxT("data/0000001A.bin"));
 	testPacket(wxT("data/0000000A.bin"));
-	testPacket(wxT("data/00000038.bin"));
-	testPacket(wxT("data/00000040.bin"));
-	testPacket(wxT("data/000000D1.bin"));
-	testPacket(wxT("data/000000D3.bin"));*/
+	testPacket(wxT("data/00000038.bin"));*/
+	//testPacket(wxT("data/00000040.bin"));
+	//testPacket(wxT("data/000000D1.bin"));
+	//testPacket(wxT("data/000000D3.bin"));
+	//testPacket(wxT("data/0000000B.bin"));
 	
 }
 //-------------------------------------------------------------------------------------
@@ -306,7 +326,7 @@ void GRMainWindow::createControls()
 	topSizer->SetSizeHints(this);
 }
 //--------------------------------------------------------------------------------
-void GRMainWindow::MenuExit()
+void GRMainWindow::MenuExit(wxCommandEvent &event)
 {
 	this->Close();
 }
@@ -388,13 +408,6 @@ void GRMainWindow::OnDataAvailable()
 
 	//read in header
 	m_socket->Read(&pckHeader, sizeof(pckHeader));
-
-	//disconnect socket
-	if(m_socket->LastCount() <= 0) 
-	{
-		OnDisconnect();
-		return;
-	}
 
 	//endian conversion
 	pckHeader.command = ntohl(pckHeader.command);
@@ -601,6 +614,14 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 			userChangedIcon(Packet);
 		break;
 
+		case FIND_USER_RESULTS:
+			findUserResults(Packet);
+		break;
+
+		case APP_BANNER:
+			appBanner(Packet);
+		break;
+
 		default:
 			if(logWindow != NULL)
 			{
@@ -747,10 +768,14 @@ void GRMainWindow::lobbyUserList(GR_PACKET *Packet)
 		nick = bufToStr(buf);
 		buf += nick.Len() + 1;
 
+		//make user
+		user = new GRUser(nick, userID, iconID);
+
 		//game list?
+		parseGamesListForUser(user, buf);
 		buf += *(buf)+1;
 
-		user = new GRUser(nick, userID, iconID);
+		
 		user->SetStatus(status);
 		icon = iconCache->findIcon(iconID);
 		user->icon = icon;
@@ -880,9 +905,9 @@ void GRMainWindow::serverMessage(GR_PACKET *Packet)
 		if(message[x] == 0x0d) message[x] = 0x0a;
 	}
 
-	chatTextCtrl->AppendText(message);
+	chatTextCtrl->AppendText(message+wxT("\n"));
 
-	if(loginWindow != NULL) loginWindow->Close();
+	if(loginWindow != NULL) loginWindow->Show(false);
 	statusWindow->Show(false);
 }
 //----------------------------------------------------------------------------
@@ -909,7 +934,7 @@ void GRMainWindow::banTimeLeft(GR_PACKET *Packet)
 	remain = seconds_left % 60;
 	seconds = remain;
 
-	sprintf(tleft, "%d days, %d hours, %d minutes, %d seconds", days, hours, minutes, seconds);
+	sprintf(tleft, "%d days, %d hours, %d minutes, %d seconds\n", days, hours, minutes, seconds);
 	wxString detail = bufToStr((wxUint8*)tleft);
 	logWindow->logText(wxT("Ban detail: ") + detail);
 }
@@ -1039,82 +1064,13 @@ void GRMainWindow::loginToGR(GR_PACKET *Packet)
 	else emailLogin = false;
 
 	char temp[1];
-	char *options = "\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x06\x00\x02\x00\x20\x01";
+	char *options = "\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+	//options[3] = 0x08;
 	char *location = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF"; //location
-	
-	char *x6cplugins = 
-"\x90\x09\x21\x00\x00\x00\x00\x00\x81\x00\x01\x00"
-"\x00\x00\x02\x00\x02\x00\x00\x00\x03\x00\x03" 
-"\x00\x00\x00\x01\x00\x04\x00\x00\x00\x01\x00" 
-"\x05\x00\x00\x00\x02\x00\x06\x00\x00\x00\x01" 
-"\x00\x07\x00\x00\x00\x01\x00\x08\x00\x00\x00" 
-"\x01\x00\x09\x00\x00\x00\x01\x00\x0A\x00\x00" 
-"\x00\x01\x00\x0B\x00\x00\x00\x02\x00\x0C\x00" 
-"\x00\x00\x01\x00\x0D\x00\x00\x00\x03\x00\x0E" 
-"\x00\x00\x00\x01\x00\x0F\x00\x00\x00\x02\x00" 
-"\x10\x00\x00\x00\x01\x00\x11\x00\x00\x00\x01" 
-"\x00\x12\x00\x00\x00\x01\x00\x13\x00\x00\x00" 
-"\x01\x00\x14\x00\x00\x00\x01\x00\x15\x00\x00" 
-"\x00\x01\x00\x16\x00\x00\x00\x02\x00\x17\x00" 
-"\x00\x00\x01\x00\x18\x00\x00\x00\x01\x00\x19" 
-"\x00\x00\x00\x01\x00\x1A\x00\x00\x00\x01\x00" 
-"\x1B\x00\x00\x00\x01\x00\x1C\x00\x00\x00\x02" 
-"\x00\x1D\x00\x00\x00\x01\x00\x1E\x00\x00\x00" 
-"\x01\x00\x1F\x00\x00\x00\x01\x00\x20\x00\x00" 
-"\x00\x01\x00\x21\x00\x00\x00\x01\x00\x22\x00" 
-"\x00\x00\x01\x00\x23\x00\x00\x00\x01\x00\x24" 
-"\x00\x00\x00\x01\x00\x25\x00\x00\x00\x02\x00" 
-"\x26\x00\x00\x00\x01\x00\x27\x00\x00\x00\x01" 
-"\x00\x28\x00\x00\x00\x01\x00\x29\x00\x00\x00" 
-"\x01\x00\x2A\x00\x00\x00\x01\x00\x2B\x00\x00" 
-"\x00\x01\x00\x2C\x00\x00\x00\x01\x00\x2D\x00" 
-"\x00\x00\x01\x00\x2E\x00\x00\x00\x01\x00\x2F" 
-"\x00\x00\x00\x01\x00\x30\x00\x00\x00\x01\x00" 
-"\x31\x00\x00\x00\x01\x00\x32\x00\x00\x00\x01" 
-"\x00\x34\x00\x00\x00\x01\x00\x35\x00\x00\x00" 
-"\x01\x00\x36\x00\x00\x00\x01\x00\x37\x00\x00" 
-"\x00\x01\x00\x38\x00\x00\x00\x01\x00\x39\x00" 
-"\x00\x00\x01\x00\x3A\x00\x00\x00\x03\x00\x3B" 
-"\x00\x00\x00\x03\x00\x3C\x00\x00\x00\x03\x00" 
-"\x3D\x00\x00\x00\x01\x00\x3E\x00\x00\x00\x02" 
-"\x00\x3F\x00\x00\x00\x01\x00\x40\x00\x00\x00" 
-"\x01\x00\x41\x00\x00\x00\x01\x00\x42\x00\x00" 
-"\x00\x01\x00\x43\x00\x00\x00\x01\x00\x44\x00" 
-"\x00\x00\x01\x00\x45\x00\x00\x00\x01\x00\x46" 
-"\x00\x00\x00\x02\x00\x47\x00\x00\x00\x01\x00" 
-"\x48\x00\x00\x00\x01\x00\x49\x00\x00\x00\x01" 
-"\x00\x4A\x00\x00\x00\x01\x00\x4B\x00\x00\x00" 
-"\x01\x00\x4D\x00\x00\x00\x01\x00\x4E\x00\x00" 
-"\x00\x01\x00\x4F\x00\x00\x00\x01\x00\x50\x00" 
-"\x00\x00\x01\x00\x51\x00\x00\x00\x01\x00\x52" 
-"\x00\x00\x00\x01\x00\x53\x00\x00\x00\x01\x00" 
-"\x54\x00\x00\x00\x02\x00\x55\x00\x00\x00\x01" 
-"\x00\x56\x00\x00\x00\x01\x00\x57\x00\x00\x00" 
-"\x01\x00\x58\x00\x00\x00\x02\x00\x59\x00\x00" 
-"\x00\x01\x00\x5A\x00\x00\x00\x01\x00\x5B\x00" 
-"\x00\x00\x01\x00\x5C\x00\x00\x00\x01\x00\x5E"
-"\x00\x00\x00\x01\x00\x60\x00\x00\x00\x01\x00" 
-"\x61\x00\x00\x00\x02\x00\x62\x00\x00\x00\x01" 
-"\x00\x63\x00\x00\x00\x01\x00\x64\x00\x00\x00" 
-"\x01\x00\x65\x00\x00\x00\x01\x00\x66\x00\x00" 
-"\x00\x04\x00\x67\x00\x00\x00\x02\x00\x68\x00" 
-"\x00\x00\x01\x00\x69\x00\x00\x00\x03\x00\x6A" 
-"\x00\x00\x00\x01\x00\x6B\x00\x00\x00\x01\x00" 
-"\x6C\x00\x00\x00\x02\x00\x6E\x00\x00\x00\x06" 
-"\x00\x6F\x00\x00\x00\x07\x00\x71\x00\x00\x00" 
-"\x01\x00\x72\x00\x00\x00\x04\x00\x73\x00\x00" 
-"\x00\x02\x00\x74\x00\x00\x00\x03\x00\x75\x00" 
-"\x00\x00\x02\x00\x76\x00\x00\x00\x01\x00\x77" 
-"\x00\x00\x00\x01\x00\x78\x00\x00\x00\x01\x00" 
-"\x79\x00\x00\x00\x02\x00\x7B\x00\x00\x00\x01" 
-"\x00\x7C\x00\x00\x00\x02\x00\x7D\x00\x00\x00" 
-"\x02\x00\x7E\x00\x00\x00\x01\x00\x7F\x00\x00" 
-"\x00\x01\x00\x80\x00\x00\x00\x02\x00\x81\x00" 
-"\x00\x00\x03\x00\x82\x00\x00\x00\x01\x00\x83" 
-"\x00\x00\x00\x01\x00\x84\x00\x00\x00\x01\x00" 
-"\x85\x00\x00\x00\x01\x00\x86\x00\x00\x00\x01" 
-"\x00\x88\x00\x00\x00\x01\x00\x89\x00\x00\x00" 
-"\x01\x3F\x20\x91\x3C";
+		
+	char *staticBuf = "\x90\x09\x21\x00\x00\x00\x00";
+
+	wxUint8 *plgList = makePluginsList();
 
 	statusWindow->SetTitle(wxT("Logging in..."));
 
@@ -1153,9 +1109,12 @@ void GRMainWindow::loginToGR(GR_PACKET *Packet)
 	if(emailLogin == true) len += strlen(GRemail) + 1;
 	else len += sizeof(wxUint32); //gr id
 
-	len += 22; //options
+	len += 16; //options
+	if(*currentProfile->gamesList != 0)
+		len += *(currentProfile->gamesList)+1;
 	len += 12; //location
-	len += 787; //x6cplugins
+	len += ((Plugins.size()-2)*6)+9; //plugins
+	len += sizeof(wxUint32); //end thing
 
 	payload = new wxUint8[len];
 
@@ -1203,24 +1162,43 @@ void GRMainWindow::loginToGR(GR_PACKET *Packet)
 	}
 
 	//options
-	memcpy(payload+pos, options, 22);
-	pos += 22;
+	memcpy(payload+pos, options, 16);
+	pos += 16;
+
+	//games list
+	if(*currentProfile->gamesList == 0)
+	{
+		//do nothing
+	}
+	else
+	{
+		*currentProfile->gamesList = *currentProfile->gamesList + 1;
+		memcpy(payload+pos, currentProfile->gamesList, *(currentProfile->gamesList));
+		pos += *(currentProfile->gamesList);
+		*currentProfile->gamesList = *currentProfile->gamesList - 1;
+	}
 
 	//location
 	memcpy(payload+pos, location, 12);
 	pos += 12;
 
+	//unknown static buf
+	memcpy(payload+pos, staticBuf, 7);
+	pos += 7;
+
 	//plugins
-	memcpy(payload+pos, x6cplugins, 787);
-	pos += 787;
+	memcpy(payload+pos, plgList, ((Plugins.size()-2)*6)+2);
+	pos += ((Plugins.size()-2)*6)+2;
 
 	//from last packet, copy to end
-	memcpy(payload+pos-4, Packet->payload, 4);
+	memcpy(payload+pos, Packet->payload, 4);
+	pos += 4;
 
 	//logWindow->logData(payload, pos);
 
 	sendGRPacket(LOGIN_TO_GAMERANGER, pos, payload);
 
+	delete[] plgList;
 	delete[] payload;
 }
 //-----------------------------------------------------------------------------
@@ -1368,6 +1346,8 @@ GRPlugin *GRMainWindow::findPluginByCode(wxUint32 gameCode)
 		if(Plugins[x]->gameCode == gameCode) return Plugins[x];
 		if(Plugins[x]->gameCode == 0xffffffff) defaultPlugin = Plugins[x];
 	}
+	if(defaultPlugin == NULL) 
+		logWindow->logText(wxT("Couldn't find plugin for gamecode: ")+wxString::Format(wxT("%d\n"), gameCode));
 	return defaultPlugin;
 }
 //----------------------------------------------------------------------------
@@ -1619,8 +1599,12 @@ void GRMainWindow::OnLoginMenu(wxCommandEvent &event)
 	//there is already a login window open
 	if(loginWindow != NULL) 
 	{
-		loginWindow->SetFocus();
-		return;
+		if(loginWindow->IsShown() == true)
+		{
+			loginWindow->Show(true);
+			loginWindow->SetFocus();
+			return;
+		}
 	}
 		
 	//Login Window
@@ -2100,7 +2084,7 @@ void GRMainWindow::OnChangeNameMenu(wxCommandEvent &event)
 	sendGRPacket(CHANGE_REAL_NAME, name.Len()+1, (wxUint8*)(const char*)name.mb_str());
 }
 //--------------------------------------------------------------------------------
-void GRMainWindow::MenuLogout()
+void GRMainWindow::MenuLogout(wxCommandEvent &event)
 {
 	m_socket->Close();
 	delete(m_socket);
@@ -2180,6 +2164,10 @@ void GRMainWindow::OnUserRightClick(wxListEvent &event)
 	if(event.GetIndex() == -1) return;
 
 	pt = event.GetPoint();
+
+	//make games list menu
+	makeGameListMenu(event.GetIndex());
+
 	userListBox->PopupMenu(popupMenu, pt);
 }
 //----------------------------------------------------------------------------------
@@ -2409,6 +2397,291 @@ void GRMainWindow::userChangedIcon(GR_PACKET *Packet)
 
 }
 //-------------------------------------------------------------------------------
+void GRMainWindow::OnFindPlayerMenu(wxCommandEvent &event)
+{
+	if(searchWindow != NULL)
+	{
+		searchWindow->SetFocus();
+		return;
+	}
+	GRFindPlayerWindow *findPlayer = new GRFindPlayerWindow(this, wxT("Find user"), wxDefaultPosition, wxDefaultSize);
+	searchWindow = findPlayer;
+	findPlayer->m_mainWindow = this;
+	findPlayer->Show(true);
+}
+//-----------------------------------------------------------------------------------
+void GRMainWindow::findUserResults(GR_PACKET *Packet)
+{
+	if(searchWindow == NULL) //disregard this
+	{
+		return;
+	}
+
+	searchWindow->findUserResults(Packet);
+}
+//----------------------------------------------------------------------------------
+wxUint8 *GRMainWindow::makePluginsList()
+{
+	wxUint32 len = 0, pluginCount = 0;
+	wxUint8 *pluginList = NULL;
+	wxUint16 gameCode;
+	wxUint16 count;
+	bool working = true;
+	int *array, x, y, pos = 0;
+
+	//count of plugins
+	pluginCount = Plugins.size();
+
+	//calculate lengths, each plugin uses 6 bytes, 2 for game code, 4 for options
+	len = ((pluginCount-2) * 6)+2; //we have chat in there
+
+	//allocate memory
+	pluginList = new wxUint8[len];
+
+	//make our array and fill it
+	array = new int[pluginCount];
+	for(x = 0; x < Plugins.size(); x++)
+	{
+		array[x] = Plugins[x]->gameCode;
+	}
+
+	//sort it
+	sort(array, array+pluginCount);
+
+	//count
+	count = pluginCount-2;
+	count = wxUINT16_SWAP_ON_LE(count);
+	memcpy(pluginList+pos, &count, 2);
+	pos += 2;
+
+	//let's make packet
+	for(y = 0; y < pluginCount; y++)
+	{
+		for(x = 0; x < Plugins.size(); x++)
+		{
+			if(array[y] == 0) continue;
+			if(array[y] == 0xffffffff) continue;
+			if(Plugins[x]->gameCode == array[y])
+			{
+				gameCode = Plugins[x]->gameCode;
+				gameCode = wxUINT16_SWAP_ON_LE(gameCode);
+				memcpy(pluginList+pos, &gameCode, sizeof(wxUint16));
+				pos += sizeof(wxUint16);
+				memcpy(pluginList+pos, Plugins[x]->unknownOption, 4);
+				pos += 4;
+				break;
+			}
+		}
+	}
+	//logWindow->logData(pluginList, len);
+
+	return pluginList;
+}
+//-----------------------------------------------------------------------------------
+void GRMainWindow::appBanner(GR_PACKET *Packet)
+{
+	wxUint32 bannerCount, bannerID, bannerLength;
+	int x;
+	wxUint8 *ptr;
+
+	ptr = Packet->payload;
+
+	//banner count
+	memcpy(&bannerCount, ptr, sizeof(wxUint32));
+	bannerCount = wxUINT32_SWAP_ON_LE(bannerCount);
+	ptr += sizeof(wxUint32);
+
+	for(x = 0; x < bannerCount; x++)
+	{
+		//banner id
+		memcpy(&bannerID, ptr, sizeof(wxUint32));
+		bannerID = wxUINT32_SWAP_ON_LE(bannerID);
+		ptr += sizeof(wxUint32);
+
+		//banner length
+		memcpy(&bannerLength, ptr, sizeof(wxUint32));
+		bannerLength = wxUINT32_SWAP_ON_LE(bannerLength);
+		ptr += sizeof(wxUint32);
+
+		//unknown
+		ptr += 4;
+
+		saveBanner(ptr, bannerLength, bannerID);
+		ptr += bannerLength;
+	}
+}
+//-----------------------------------------------------------------------------------
+void GRMainWindow::saveBanner(wxUint8 *data, wxUint32 length, wxUint32 bannerID)
+{
+	char *swfFile = "FWS";
+	char *gifFile = "GIF";
+	char *jpgFile = "\xff\xd8";
+	wxString extension;
+
+	if(memcmp(swfFile, data, 3) == 0)
+		extension = wxT("swf");
+	else if(memcmp(gifFile, data, 3) == 0)
+		extension = wxT("gif");
+	else if(memcmp(jpgFile, data, 2) == 0)
+		extension = wxT("jpg");
+
+	wxFile file(wxString::Format(wxT("banner%08X"), bannerID)+wxT(".")+extension, wxFile::write);
+
+	file.Write(data, length);
+	file.Close();
+}
+//------------------------------------------------------------------------------------
+void GRMainWindow::parseGamesListForUser(GRUser *user, wxUint8 *buf)
+{
+	wxUint8 *ptr;
+	wxUint8 count;
+	GRPlugin *plugin;
+	int x, y, offset = 1;
+
+	ptr = buf;
+
+	//count
+	count = *ptr;
+	ptr++;
+
+	for(x = 0; x < count; x++)
+	{
+		if((*ptr & 1) == 1) 
+			user->addGameToList(findPluginByCode(offset));
+		if((*ptr & 2) == 2)
+			user->addGameToList(findPluginByCode(offset+1));
+		if((*ptr & 4) == 4)
+			user->addGameToList(findPluginByCode(offset+2));
+		if((*ptr & 8) == 8)
+			user->addGameToList(findPluginByCode(offset+3));
+		if((*ptr & 16) == 16)
+			user->addGameToList(findPluginByCode(offset+4));
+		if((*ptr & 32) == 32)
+			user->addGameToList(findPluginByCode(offset+5));
+		if((*ptr & 64) == 64)
+			user->addGameToList(findPluginByCode(offset+6));
+		if((*ptr & 128) == 128)
+			user->addGameToList(findPluginByCode(offset+7));
+
+		offset += 8;
+		ptr++;
+	}
+}
+//--------------------------------------------------------------------------------------
+wxUint8 *GRMainWindow::makeGameList(vector <GRPlugin*> list)
+{
+	int *plgList,x,y,z;
+	wxUint8 *buf = NULL;
+	wxUint8 byteCount;
+	wxUint8 temp;
+	int listSize;
+	wxUint8 t1;
+	int offset = 0;
+
+	if(list.size() == 0)
+	{
+		buf = new wxUint8[1];
+		byteCount = 0;
+		memcpy(buf, &byteCount, 1);
+		return buf;
+	}
+
+	plgList = new int[list.size()];
+
+	//fill plugin list array
+	for(x = 0; x < list.size(); x++)
+	{
+		plgList[x] = list[x]->gameCode;
+	}
+
+	//sort
+	sort(plgList, plgList+list.size());
+
+	byteCount = (plgList[list.size()-1]/8) + 1;
+	buf = new wxUint8[byteCount+1];
+
+	memcpy(buf, &byteCount, 1);
+	listSize = list.size();
+
+	for(x = 0; x < byteCount; x++)
+	{
+		temp = 0;
+		for(y = 0; y < 8; y++)
+		{
+			for(z = 0; z < listSize; z++)
+			{
+				if(plgList[z] > (x*8) && plgList[z] <= ((x+1)*8))
+				{
+				t1 = plgList[z] - (x*8);
+				if(t1 == 1)
+					temp |= 1;
+				if(t1 == 2)
+					temp |= 2;
+				if(t1 == 3)
+					temp |= 4;
+				if(t1 == 4)
+					temp |= 8;
+				if(t1 == 5)
+					temp |= 16;
+				if(t1 == 6)
+					temp |= 32;
+				if(t1 == 7)
+					temp |= 64;
+				if(t1 == 8)
+					temp |= 128;
+				}
+			}
+			
+		}
+		memcpy(buf+(x+1), &temp, 1);
+	}
+	return buf;
+}
+//--------------------------------------------------------------------------------------
+void GRMainWindow::clearGamesListMenu()
+{
+	popupMenu->Destroy(GAMES_LIST_MENU);
+	gameListMenu = new wxMenu();
+	popupMenu->Append(GAMES_LIST_MENU, wxT("Games"), gameListMenu);
+}
+//------------------------------------------------------------------------------------
+void GRMainWindow::makeGameListMenu(int index)
+{
+	GRUser *user;
+	int x;
+	wxMenuItem *gameItem;
+
+	if(index == -1) return;
+
+	user = (GRUser*)userListBox->GetItemData(index);
+	if(user == NULL) return;
+
+	clearGamesListMenu();
+
+	if(user->gamesList.size() == 0)
+	{
+		gameListMenu->Append(100, wxT("No games"));
+		return;
+	}
+
+	for(x = 0; x < user->gamesList.size(); x++)
+	{
+		if(user->gamesList[x]->gameCode == 0xffffffff) continue;
+		gameItem = new wxMenuItem(gameListMenu, x);
+		gameItem->SetBitmap(user->gamesList[x]->image->ConvertToBitmap());
+		gameItem->SetText(user->gamesList[x]->gameName);
+		gameListMenu->Append(gameItem);
+	}
+}
+//--------------------------------------------------------------------------------------
+void GRMainWindow::OnChangeMyGamesMenu(wxCommandEvent &event)
+{
+	GRChangeMyGames *changeGames = new GRChangeMyGames(this, wxT("My Games"), wxDefaultPosition, wxDefaultSize);
+	changeGames->m_mainWindow = this;
+	changeGames->populateListBox();
+	changeGames->Show(true);
+}
+//----------------------------------------------------------------------------------
 
 
 

@@ -98,7 +98,7 @@ void GRPrivateMessage::OnChatEditEnter(wxCommandEvent &event)
 
 	temp = wxUINT32_SWAP_ON_LE(userID);
 	memcpy(payload, &temp, sizeof(wxUint32));
-	strcpy((char*)payload+sizeof(wxUint32), (char*)(const char*)msg.c_str());
+	strcpy((char*)payload+sizeof(wxUint32), (char*)(const char*)msg.mb_str());
 
 	mainWindow->sendGRPacket(SEND_PRIVATE_MESSAGE, len, payload);
 

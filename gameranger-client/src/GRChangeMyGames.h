@@ -1,6 +1,6 @@
 /*
 GameRanger
-GRUser.h
+GRFindPlayerWindow.h
 
 Copyright (C) 2004 xoclipse (xoclipse@cox.net)
 
@@ -19,43 +19,45 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef GRUSER_H
-#define GRUSER_H
+#ifndef GRCHANGEMYGAMES_WINDOW_H
+#define GRCHANGEMYGAMES_WINDOW_H
 
 #include "GRBaseDefs.h"
-
-class GRMainWindow;
-class GRLobby;
-class GRIcon;
-class GRPlugin;
+#include "GRMainWindow.h"
 
 using namespace std;
 
-class GRUser
+class GRChangeMyGames : public wxFrame
 {
 public:
-	GRUser(wxString nick, wxUint32 userID, wxUint32 iconID);
-	GRUser();
-	~GRUser();
+	GRChangeMyGames(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size);
+	~GRChangeMyGames();
 
-	wxString nick;
-	wxUint32 userID;
-	wxUint32 iconID;
-	wxUint8 status;
-	GRIcon *icon;
+	//gui elements
+	wxCheckListBox *m_listBox;
+	wxButton *m_saveButton;
 
-	GRLobby *currentLobby;
+	//populate with games
+	void populateListBox();	
 
-	void SetStatus(wxUint8 status);
+	//create controls
+	void createControls();
 
-	//Games list
-	void addGameToList(GRPlugin *game);
-	vector <GRPlugin*> gamesList;
+	//main window
+	GRMainWindow *m_mainWindow;
 
-	//Status
-	bool isPremium();
-	bool isPlaying();
-	bool isIdle();
+	//Events
+	void OnSaveGameList(wxCommandEvent &event);
+	void OnCheckAll(wxCommandEvent &event);
+	void OnUncheckAll(wxCommandEvent &event);
+
+	DECLARE_EVENT_TABLE()
+};
+
+enum {
+	SAVE_GAME_LIST_BUTTON_ID = 1070,
+	CHECK_ALL_BUTTON_ID, 
+	UNCHECK_ALL_BUTTON_ID
 };
 
 #endif

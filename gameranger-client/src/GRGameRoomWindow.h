@@ -43,6 +43,7 @@ public:
 
 	//Events
 	void OnChatEditEnter(wxCommandEvent &event);
+	void OnUserDoubleClick(wxListEvent& event);
 
 	//Main Window
 	GRMainWindow *mainWindow;

@@ -32,6 +32,14 @@ GRUser::GRUser(wxString nick, wxUint32 userID, wxUint32 iconID)
 	icon = NULL;
 }
 //------------------------------------------------------------
+GRUser::GRUser()
+{
+	this->nick = wxT("default nick");
+	this->userID = 0;
+	this->iconID = 0;
+	icon = NULL;
+}
+//------------------------------------------------------------
 GRUser::~GRUser()
 {
 
@@ -67,5 +75,11 @@ bool GRUser::isIdle()
 		return true;
 	}
 	else return false;
+}
+//----------------------------------------------------------------
+void GRUser::addGameToList(GRPlugin *game)
+{
+	if(game == NULL) return;
+	gamesList.push_back(game);
 }
 //----------------------------------------------------------------

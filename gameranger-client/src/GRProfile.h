@@ -41,6 +41,7 @@ public:
 	wxString nickname;
 	wxString realname;
 	wxUint8 macAddress[6];
+	wxUint8 *gamesList;
 
 	wxUint32 comboIndex;
 

@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "GRLoginWindow.h"
+#include "GRLogWindow.h"
 #include "GRProfile.h"
 #include "memdebug.h"
 
@@ -134,6 +135,7 @@ void GRLoginWindow::OnLoginButton(wxCommandEvent &event)
 	}
 	mainWindow->myUserID = currentProfile->grID;
 	mainWindow->myNickname = currentProfile->nickname;
+	mainWindow->currentProfile = currentProfile;
 	mainWindow->Login((char*)(const char*)emailEdit->GetValue().mb_str(), (char*)(const char*)passwordEdit->GetValue().mb_str());
 
 }

@@ -36,6 +36,9 @@ public:
 	wxUint32 gameCode;
 	wxString gameName;
 	wxImage *image;
+
+	//Unknown option needed for login packet plugin list
+	wxUint8 unknownOption[4];
 	
 	//color table
 	wxUint8 *colorTable;

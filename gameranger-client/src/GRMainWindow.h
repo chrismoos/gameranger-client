@@ -39,6 +39,7 @@ class GRPrivateMessage;
 class GRRegWindow;
 class GRGameRoomWindow;
 class GRPremiumUserInfoWindow;
+class GRFindPlayerWindow;
 
 using namespace std;
 
@@ -67,6 +68,8 @@ public:
 	wxImageList *iconImgList;
 	wxStatusBar *statusBar;
 	wxMenu *popupMenu;
+	wxMenu *usersMenu;
+	wxMenu *gameListMenu;
 
 	//Cleanup
 	void cleanupGR();
@@ -80,8 +83,8 @@ public:
 	GRRegWindow *regWindow;
 
 	//Events
-	void MenuExit();
-	void MenuLogout();
+	void MenuExit(wxCommandEvent &event);
+	void MenuLogout(wxCommandEvent &event);
 	void OnComboBoxSelect(wxCommandEvent &event);
 	void OnTimer();
 	void OnChatEditEnter(wxCommandEvent &event);
@@ -96,6 +99,9 @@ public:
 	void OnUserRightClick(wxListEvent &event);
 	void OnUserListGetInfo(wxCommandEvent &event);
 	void OnChangeIconMenu(wxCommandEvent &event);
+	void OnFindPlayerMenu(wxCommandEvent &event);
+	void OnChangeMyGamesMenu(wxCommandEvent &event);
+
 
 	//User List Box Helpers
 	wxInt32 getUserItemIndex(GRUser *user);
@@ -151,6 +157,10 @@ public:
 	//Helper Functions
 	wxString bufToStr(wxUint8 *text);
 
+	//Find Player
+	GRFindPlayerWindow *searchWindow;
+	void findUserResults(GR_PACKET *Packet);
+
 	//Lobby Functions/Variables
 	vector <GRLobby*> Lobbies;
 	GRLobby *currentLobby;
@@ -176,6 +186,15 @@ public:
 	void loadPlugins();
 	GRPlugin *findPluginByCode(wxUint32 gameCode);
 	vector <GRPlugin*> Plugins;
+	void parseGamesListForUser(GRUser *user, wxUint8 *buf);
+	wxUint8 *makePluginsList();
+	void clearGamesListMenu();
+	void makeGameListMenu(int index);
+	wxUint8 *makeGameList(vector <GRPlugin*> list);
+
+	//Banners
+	void saveBanner(wxUint8 *data, wxUint32 length, wxUint32 bannerID);
+	void appBanner(GR_PACKET *Packet);
 
 	//Mac OS Color Profile
 	void loadColorProfile();
@@ -253,7 +272,10 @@ enum {
 	GAMELIST_ID,
 	FILE_MENU_LOGOUT,
 	USER_LIST_MENU_GET_INFO,
-	CHANGE_ICON_MENU_ITEM
+	CHANGE_ICON_MENU_ITEM,
+	FIND_PLAYER_MENU,
+	GAMES_LIST_MENU,
+	CHANGE_MY_GAMES_ITEM
 };
 
 #endif

@@ -55,6 +55,10 @@ void GRPlugin::LoadFromFile(wxString filename)
 	file.Read(byte, 1);
 	gameCode = byte[0];
 
+	//Get Unknown option
+	file.Seek(0x32, wxFromStart);
+	file.Read(unknownOption, 4);
+
 	//Get Game Name
 	file.Seek(0x36, wxFromStart);
 	file.Read(byte, 1);

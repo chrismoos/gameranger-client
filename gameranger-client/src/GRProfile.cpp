@@ -29,11 +29,13 @@ GRProfile::GRProfile()
 	email = wxT("email");
 	realname = wxT("name");
 	makeMac();
+	gamesList = new wxUint8[1];
+	gamesList[0] = 0;
 }
 //------------------------------------------------------------------
 GRProfile::~GRProfile()
 {
-
+	if(gamesList != NULL) delete[] gamesList;
 }
 //------------------------------------------------------------------------
 void GRProfile::Write()
@@ -46,6 +48,7 @@ void GRProfile::Write()
 	size += nickname.Len() + 1;
 	size += realname.Len() + 1;
 	size += email.Len() + 1;
+	size += *(gamesList)+1;
 
 
 	buf = new wxUint8[size];
@@ -73,6 +76,10 @@ void GRProfile::Write()
 	strcpy((char*)ptr, (const char*)realname.mb_str());
 	ptr += realname.Len() + 1;
 
+	//games list
+	memcpy(ptr, gamesList, *(gamesList)+1);
+	ptr += *(gamesList)+1;
+
 	file.Open(wxT("profiles/")+nickname+wxT(".bin"), wxFile::write);
 
 	file.Write(buf, size);
@@ -93,8 +100,9 @@ void GRProfile::Read(wxString filename)
 
 	if(!file.IsOpened()) return;
 
-	buf = new wxUint8[file.Length()];
+	buf = new wxUint8[file.Length()+1];
 	file.Read(buf, file.Length());
+	buf[file.Length()] = 0xFF;
 	ptr = buf;
 	//Parse 
 	
@@ -119,6 +127,15 @@ void GRProfile::Read(wxString filename)
 	//real name
 	realname = bufToStr(ptr);
 	ptr += realname.Len() + 1;
+
+	//games list
+	if(*ptr != 0xFF)
+	{
+		if(gamesList != NULL) delete[] gamesList;
+		gamesList = new wxUint8[*(ptr)+1];
+		memcpy(gamesList, ptr, *(ptr)+1);
+	}
+	
 
 	file.Close();
 

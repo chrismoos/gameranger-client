@@ -95,7 +95,15 @@ SOURCE=.\src\GRChangeIconWindow.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\src\GRChangeMyGames.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\src\GRConnecStatusWindow.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\GRFindPlayerWindow.cpp
 # End Source File
 # Begin Source File
 
@@ -187,7 +195,15 @@ SOURCE=.\src\GRChangeIconWindow.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\src\GRChangeMyGames.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\src\GRConnectStatusWindow.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\src\GRFindPlayerWindow.h
 # End Source File
 # Begin Source File
 

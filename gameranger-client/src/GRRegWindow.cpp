@@ -462,7 +462,6 @@ void GRRegWindow::createAccountAck(GR_PACKET *Packet)
 			msgDlg->ShowModal();
 			delete(msgDlg);
 			writePrefs();
-			wizard->Destroy();
 			this->Destroy();
 		break;
 

@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRIconCache.h"
 #include "GRIcon.h"
 #include "GRLogWindow.h"
+#include "GRPrivateMessage.h"
 #include "memdebug.h"
 
 GRGameRoomWindow::GRGameRoomWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size)
@@ -49,7 +50,9 @@ GRGameRoomWindow::~GRGameRoomWindow()
 	vector <GRGameRoomWindow*>::iterator it;
 	GRGameRoomWindow *window;
 	gameRoom->currentPlayers--;
+	if(mainWindow == NULL) return;
 	mainWindow->updateGameRoomPlayerCountString(gameRoom);
+
 	//Delete this instance from main window's pm array
 	for(x = 0; x < mainWindow->gameRoomWindows.size(); x++)
 	{
@@ -315,5 +318,35 @@ void GRGameRoomWindow::RemoveUser(GRUser *User)
 
 }
 //------------------------------------------------------------------------
+void GRGameRoomWindow::OnUserDoubleClick(wxListEvent& event)
+{
+	int index;
+	GRUser *user;
+	GRPrivateMessage *msg;
+	
+	index = event.GetIndex();
 
+	if(index == -1) return;
+
+	
+	user = (GRUser*)userListBox->GetItemData(event.GetIndex());
+	if(user == NULL) return;
+
+	//See if message window is already open, and if so, give it focus
+	msg = mainWindow->findPrivateMessageByID(user->userID);
+	if(msg != NULL) //it's open, give it focus
+	{
+		msg->SetFocus();
+		return;
+	}
+
+	//Create new PM Window
+	GRPrivateMessage *pm = new GRPrivateMessage(this, wxT("Private Message - ")+user->nick, wxDefaultPosition, wxDefaultSize);
+	pm->mainWindow = mainWindow;
+	pm->userID = user->userID;
+	pm->nickname = user->nick;
+	pm->Show(true);
+    mainWindow->privateMessages.push_back(pm);
+}
+//--------------------------------------------------------------------------
 

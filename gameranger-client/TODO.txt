@@ -1,5 +1,3 @@
 Ladders
-User info - premium and normal users
 Game room icon update
 Game room nickname update
-Game room private messages
