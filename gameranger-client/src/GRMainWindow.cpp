@@ -391,6 +391,8 @@ void GRMainWindow::OnDataAvailable()
 //----------------------------------------------------------------------------
 void GRMainWindow::handlePacket(GR_PACKET *Packet)
 {
+	wxMessageDialog *msgDlg;
+
 	//Big ugly List of Commands
 	switch(Packet->header->command)
 	{
@@ -509,13 +511,13 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 		break;
 
 		case GAME_ROOM_FULL:
-			wxMessageDialog *msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join is full, please try again later."), wxT("Join room errord"), wxICON_ERROR);
+			msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join is full, please try again later."), wxT("Join room errord"), wxICON_ERROR);
 			msgDlg->ShowModal();
 			delete(msgDlg);
 		break;
 
 		case GAME_ROOM_NO_LATE_JOINERS:
-			wxMessageDialog *msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join does not allow late joiners."), wxT("Join room errord"), wxICON_ERROR);
+			msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join does not allow late joiners."), wxT("Join room errord"), wxICON_ERROR);
 			msgDlg->ShowModal();
 			delete(msgDlg);
 		break;
