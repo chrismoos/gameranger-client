@@ -69,7 +69,8 @@ GRGameRoomWindow::~GRGameRoomWindow()
 	for(x = 0; x < users.size(); x++) delete(users[x]);
 	users.clear();
 	mainWindow->currentGameRoom = NULL;
-	mainWindow->sendGRPacket(LEAVE_GAME_ROOM, 0, NULL);
+	if(userListBox->GetItemCount() > 0) mainWindow->sendGRPacket(LEAVE_GAME_ROOM, 0, NULL);
+	mainWindow->currentRoomID = 0;
 	
 }
 //--------------------------------------------------------------------------------
@@ -88,12 +89,20 @@ void GRGameRoomWindow::createControls()
 
 	//Add user list box
 	userListBox = new wxListCtrl(this, GAMEROOM_USERLIST_ID, wxDefaultPosition,
-		wxSize(180, 400), wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_SORT_ASCENDING  | wxLC_NO_HEADER | wxLC_ALIGN_LEFT);
+		wxSize(180, 400), wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_NO_HEADER | wxLC_ALIGN_LEFT);
 	userListBox->InsertColumn(0, wxT("nick"), wxLIST_FORMAT_LEFT, 175);
 
 	/* Add join/host/abort button */
 	actionButton = new wxButton(this, GAMEROOM_ACTION_BUTTON_ID, wxT("Null"), 
 		wxDefaultPosition, wxDefaultSize);
+
+	//game list menu
+	gameListMenu = new wxMenu();
+
+	//User list box popup menu
+	popupMenu = new wxMenu();
+    popupMenu->Append(GAMEROOM_USER_GET_INFO, wxT("Get &user info"));
+	popupMenu->Append(GAMEROOM_LIST_MENU, wxT("Games"), gameListMenu);
 
 
 	chatEditField->SetFocus();
@@ -319,7 +328,14 @@ void GRGameRoomWindow::RemoveUser(GRUser *User)
 		}
 	}
 
-	addTextWithColor(wxT("<< ") + User->nick + wxT(" has left the room >>\n"), *wxRED);
+	if(User->userID == mainWindow->myUserID) {
+		addTextWithColor(wxT("<< You have been kicked from the room >>"), *wxRED);
+		userListBox->ClearAll();
+		mainWindow->currentGameRoom = NULL;
+	}
+	else {
+		addTextWithColor(wxT("<< ") + User->nick + wxT(" has left the room >>\n"), *wxRED);
+	}
 
 	index = getUserItemIndex(User);
 	if(index == -1) 
@@ -391,16 +407,18 @@ void GRGameRoomWindow::OnButtonClick(wxCommandEvent &event)
 	}
 	else if(actionMsg == "Abort") { /* abort game(hosts and players) */
 		mainWindow->sendGRPacket(ABORT_GAME_ROOM, 0, NULL);
+		addTextWithColor("<< Aborting game >>\n", *wxRED);
 		if(this->gameRoom->grID == mainWindow->myUserID) {
 			actionButton->SetLabel("Start");
 		}
 		else {
 			actionButton->SetLabel("Join");
 		}
-		addTextWithColor(wxT("<< Aborted game >>\n"), *wxRED);
 	}
 	else if(actionMsg == "Join") { /* players only */
 		actionButton->SetLabel("Abort");
+		mainWindow->sendGRPacket(GAME_LAUNCH_LOADING, 0, NULL);
+		mainWindow->sendGRPacket(GAME_LAUNCH_DONE, 0, NULL);
 #ifdef WIN32
 		ShellExecute(NULL, "Open", 
 			"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear\\UrbanOperations.exe", 
@@ -410,3 +428,44 @@ void GRGameRoomWindow::OnButtonClick(wxCommandEvent &event)
 	}
 }
 //--------------------------------------------------------------------------------
+void GRGameRoomWindow::OnUserRightClick(wxListEvent &event)
+{
+	wxPoint pt;
+	if(event.GetIndex() == -1) return;
+
+	pt = event.GetPoint();
+
+	//make games list menu
+	clearGamesListMenu();
+	mainWindow->makeGameListMenu(userListBox, gameListMenu, event.GetIndex());
+
+	userListBox->PopupMenu(popupMenu, pt);
+}
+//----------------------------------------------------------------------------------
+void GRGameRoomWindow::clearGamesListMenu()
+{
+	popupMenu->Destroy(GAMEROOM_LIST_MENU);
+	gameListMenu = new wxMenu();
+	popupMenu->Append(GAMEROOM_LIST_MENU, wxT("Games"), gameListMenu);
+}
+//------------------------------------------------------------------------------------
+void GRGameRoomWindow::OnUserListGetInfo(wxCommandEvent &event)
+{
+	int index = -1;
+	wxUint32 userID;
+	GRUser *user;
+
+	index = userListBox->GetNextItem(index, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	if(index == -1) return;
+
+
+	user = (GRUser*)userListBox->GetItemData(index);
+	if(user == NULL) return;
+
+	userID = user->userID;
+
+	userID = wxUINT32_SWAP_ON_LE(userID);
+	mainWindow->roomWantedInfo = true;
+	mainWindow->sendGRPacket(GET_USER_INFO, sizeof(wxUint32), (wxUint8*)&userID);
+}
+//----------------------------------------------------------------------------------

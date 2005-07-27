@@ -28,6 +28,7 @@ GRProfile::GRProfile()
 	nickname = wxT("nick");
 	email = wxT("email");
 	realname = wxT("name");
+	password = wxT("");
 	makeMac();
 	gamesList = new wxUint8[1];
 	gamesList[0] = 0;
@@ -49,6 +50,7 @@ void GRProfile::Write()
 	size += realname.Len() + 1;
 	size += email.Len() + 1;
 	size += *(gamesList)+1;
+	size += password.Len() + 1;
 
 
 	buf = new wxUint8[size];
@@ -79,6 +81,10 @@ void GRProfile::Write()
 	//games list
 	memcpy(ptr, gamesList, *(gamesList)+1);
 	ptr += *(gamesList)+1;
+
+	//password
+	strcpy((char*)ptr, (const char*)password.mb_str());
+	ptr += password.Len() + 1;
 
 	file.Open(wxT("profiles/")+nickname+wxT(".bin"), wxFile::write);
 
@@ -134,6 +140,13 @@ void GRProfile::Read(wxString filename)
 		if(gamesList != NULL) delete[] gamesList;
 		gamesList = new wxUint8[*(ptr)+1];
 		memcpy(gamesList, ptr, *(ptr)+1);
+		ptr += *(ptr)+1;
+	}
+
+	//password
+	if(*ptr != 0xFF) 
+	{
+		password = bufToStr(ptr);
 	}
 	
 

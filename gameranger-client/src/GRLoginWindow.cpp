@@ -89,6 +89,9 @@ void GRLoginWindow::createControls()
 	gridSizer->Add(passStatic, 0, wxALIGN_LEFT);
 	gridSizer->Add(passwordEdit, 0, wxALIGN_CENTER);
 
+	savePass = new wxCheckBox(panel, -1, wxT("Save password"), wxDefaultPosition, wxDefaultSize);
+
+
 	/* ------------------- Create Buttons ------------------------------------------ */
 	wxButton *loginButton = new wxButton(panel, LOGIN_BUTTON, wxT("Login"), wxDefaultPosition, wxDefaultSize);
 	bottomSizer->Add(loginButton, 0, wxALIGN_CENTER | wxRIGHT, 5);
@@ -96,6 +99,7 @@ void GRLoginWindow::createControls()
 
 	/* ---------------- Add to Main Sizer ------------------------------------------ */
 	mainSizer->Add(gridSizer, 0, wxALIGN_CENTER | wxALL, 15);
+	mainSizer->Add(savePass, 0, wxALIGN_CENTER | wxBOTTOM, 7);
 	mainSizer->Add(bottomSizer, 0, wxALIGN_CENTER | wxBOTTOM | wxRIGHT | wxLEFT, 15);
 
 
@@ -136,6 +140,11 @@ void GRLoginWindow::OnLoginButton(wxCommandEvent &event)
 	mainWindow->myUserID = currentProfile->grID;
 	mainWindow->myNickname = currentProfile->nickname;
 	mainWindow->currentProfile = currentProfile;
+
+	if(savePass->IsChecked()) {
+		mainWindow->currentProfile->password = passwordEdit->GetValue();
+	}
+
 	mainWindow->Login((char*)(const char*)emailEdit->GetValue().mb_str(), (char*)(const char*)passwordEdit->GetValue().mb_str());
 
 }
@@ -201,6 +210,10 @@ void GRLoginWindow::OnComboBoxSelect(wxCommandEvent &event)
 	currentProfile = profile;
 
 	emailEdit->SetValue(profile->email);
+	if(profile->password.Len() > 0) {
+		passwordEdit->SetValue(profile->password);
+		savePass->SetValue(true);
+	}
 
 }
 //------------------------------------------------------------------------------

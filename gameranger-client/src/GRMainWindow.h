@@ -103,6 +103,7 @@ public:
 	void OnChangeIconMenu(wxCommandEvent &event);
 	void OnFindPlayerMenu(wxCommandEvent &event);
 	void OnChangeMyGamesMenu(wxCommandEvent &event);
+	void OnToggleTimestamp(wxCommandEvent &event);
 
 
 	//User List Box Helpers
@@ -194,7 +195,7 @@ public:
 	void parseGamesListForUser(GRUser *user, wxUint8 *buf);
 	wxUint8 *makePluginsList();
 	void clearGamesListMenu();
-	void makeGameListMenu(int index);
+	void makeGameListMenu(wxListCtrl *list, wxMenu *gameMenu, int index);
 	wxUint8 *makeGameList(vector <GRPlugin*> list);
 
 	//Banners
@@ -224,6 +225,7 @@ public:
 	//Game Room Windows
 	vector <GRGameRoomWindow*> gameRoomWindows;
 	GRGameRoomWindow *currentGameRoom;
+	int currentRoomID;
 
 	//User Info
 	void regularUserInfo(GR_PACKET *Packet);
@@ -231,11 +233,16 @@ public:
 	void requestPicture(wxUint32 pictureID);
 	GRPremiumUserInfoWindow *currentPremiumInfoWindow;
 	void recvPremiumUserImage(GR_PACKET *Packet);
+	bool roomWantedInfo;
 
 	//Log Packets
 	void logPacket(wxUint8 *buf, wxUint32 len);
 	wxUint8 *createRawPacket(wxUint32 command, wxUint32 len, wxUint8 *payload);
 
+
+	/* Timestamps */
+	bool showTimestamps;
+	wxMenuItem *timestampItem;
 
 	char GRemail[128];
 	char GRpassword[128];
@@ -281,7 +288,8 @@ enum {
 	FIND_PLAYER_MENU,
 	GAMES_LIST_MENU,
 	CHANGE_MY_GAMES_ITEM,
-	HOST_MENU_ITEM
+	HOST_MENU_ITEM,
+	TIMESTAMP_TOGGLE
 };
 
 #endif

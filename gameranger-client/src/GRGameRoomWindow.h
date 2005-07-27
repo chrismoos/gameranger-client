@@ -41,11 +41,15 @@ public:
 	wxTextCtrl *chatEditField;
 	wxListCtrl *userListBox;
 	wxButton *actionButton;
+	wxMenu *popupMenu;
+	wxMenu *gameListMenu;
 
 	//Events
 	void OnChatEditEnter(wxCommandEvent &event);
 	void OnUserDoubleClick(wxListEvent& event);
 	void OnButtonClick(wxCommandEvent &event);
+	void OnUserRightClick(wxListEvent &event);
+	void OnUserListGetInfo(wxCommandEvent &event);
 
 	//Main Window
 	GRMainWindow *mainWindow;
@@ -70,6 +74,9 @@ public:
 	void setListInfo(GRUser *User);
 	wxInt32 getUserItemIndex(GRUser *user);
 
+	/* Popup menu */
+	void clearGamesListMenu();
+
 	//create controls
 	void createControls();
 
@@ -80,7 +87,10 @@ enum {
 	GAMEROOM_CHATEDIT_ID = wxID_HIGHEST+120,
 	GAMEROOM_CHATLOG_ID,
 	GAMEROOM_USERLIST_ID,
-	GAMEROOM_ACTION_BUTTON_ID
+	GAMEROOM_ACTION_BUTTON_ID,
+	GAMEROOM_LIST_MENU,
+	GAMEROOM_USER_GET_INFO
+
 };
 
 #endif

@@ -42,6 +42,7 @@ class GRLoginWindow : public wxFrame
 		wxTextCtrl *passwordEdit;
 		wxButton *loginButton;
 		wxComboBox *comboBox;
+		wxCheckBox *savePass;
 
 		//Events
 		void OnLoginButton(wxCommandEvent &event);

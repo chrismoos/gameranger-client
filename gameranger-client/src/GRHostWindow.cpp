@@ -136,7 +136,8 @@ void GRHostWindow::OnHostButton(wxCommandEvent &evt)
 	GR_HOST_GAME_ROOM hostHeader;
 	GRPlugin *plugin = NULL;
 	int pos = 0;
-	char nulls[1] = {0x00};
+	char lateJoiners[1];
+	char nulls[1] = {0};
 
 	if(gameCombo->GetSelection() == -1) return;
 	plugin = (GRPlugin*)gameCombo->GetClientData(gameCombo->GetSelection());
@@ -154,16 +155,18 @@ void GRHostWindow::OnHostButton(wxCommandEvent &evt)
 	hostHeader.gameID = wxUINT32_SWAP_ON_LE(plugin->gameCode);
 	hostHeader.unknown = wxUINT32_SWAP_ON_LE(0xffffffff);
 	hostHeader.maxPlayers = wxUINT32_SWAP_ON_LE(atoi((const char*)playersCombo->GetValue().mb_str()));
+	hostHeader.lateJoiners = wxUINT32_SWAP_ON_LE(0);
+
 	if(lateJoinersCheck->IsChecked())
-		hostHeader.lateJoiners = wxUINT32_SWAP_ON_LE(0);
+		lateJoiners[0] = 0;
 	else
-		hostHeader.lateJoiners = wxUINT32_SWAP_ON_LE(1);
+		lateJoiners[0] = 1;
 
 	memcpy(payload, &hostHeader, sizeof(hostHeader));
 	pos += sizeof(hostHeader);
 
 	/* null byte */
-	memcpy(payload+pos, nulls, 1);
+	memcpy(payload+pos, lateJoiners, 1);
 	pos++;
 
 	/* description */
