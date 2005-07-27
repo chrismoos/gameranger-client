@@ -3,6 +3,16 @@ Gameranger Client
 Change Log
 ---------------------------------------------
 
+7/26/05 - 
+Fixed problem with late joiners.
+Fixed problem with hosting a game and Start button not functioning properly.
+Fixed bug with Join button after you abort game.
+Fixed problem with game room when you are kicked.
+Fixed problem with sorting in game room user list(host should be on top).
+Added right mouse click on users in game rooms.
+Added sorting to user's game lists.
+Added option to save your password in the login dialog.
+
 7/1/05 - 
 
 Added notification if the game room you are in has closed.

@@ -1,5 +1,5 @@
 Fix idle room status. - June 5 2005
-
+Add support for timestamps. - June 27 2005
 
 OLD STUFF
 ----------------------------------------
