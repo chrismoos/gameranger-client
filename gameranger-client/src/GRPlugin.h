@@ -49,11 +49,22 @@ public:
 	wxImage *iconDataToImage(wxUint8 *data);
 	wxInt32 imageIndex;
 
-	
+
     
 };
 
-
+struct sortPluginByName
+{
+    public: bool operator() (GRPlugin *plug1, GRPlugin *plug2)
+    {
+		int first, second;
+		first = plug1->gameName.GetChar(0);
+		second = plug2->gameName.GetChar(0);
+        if(first >= 97) first -= 32;
+		if(second >= 97) second -= 32;
+		return first < second;
+    }
+};
 
 
 #endif

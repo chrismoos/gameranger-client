@@ -187,6 +187,7 @@ public:
 	void gameRoomStatusChanged(GR_PACKET *Packet);
 	void setGameRoomListInfo(GRGameRoom *gameRoom);
 	void gameRoomLaunched(GR_PACKET *Packet);
+	bool gameRoomWillClose;
 
 	//Plugins
 	void loadPlugins();

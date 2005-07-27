@@ -369,6 +369,7 @@ void GRMainWindow::OnConnect()
 	currentRoomID = 0;
 	roomWantedInfo = false;
 	showTimestamps = false;
+	gameRoomWillClose = false;
 	fileMenu->Enable(FILE_MENU_LOGOUT, true);
 	timer->Start(360000, false);
 }
@@ -2167,7 +2168,6 @@ void GRMainWindow::gameRoomUserList(GR_PACKET *Packet)
 	
 
 	if(currentGameRoom == NULL) {
-
 		gameRoom = new GRGameRoomWindow(this, room->Plugin->gameName+wxT(" - ")+room->host, wxDefaultPosition, wxDefaultSize);
 		gameRoom->mainWindow = this;
 		gameRoom->gameRoom = room;
@@ -2266,8 +2266,16 @@ void GRMainWindow::gameRoomUserList(GR_PACKET *Packet)
 
 	setGameRoomListInfo(currentGameRoom->gameRoom);
 	updateGameRoomPlayerCountString(currentGameRoom->gameRoom);
-	currentGameRoom->Show(true);
+	
 	currentRoomID = currentGameRoom->gameRoom->gameRoomID;
+	if(gameRoomWillClose) {
+		currentGameRoom->Show(false);
+		currentGameRoom->Close();
+		gameRoomWillClose = false;
+	}
+	else {
+		currentGameRoom->Show(true);
+	}
 }
 //------------------------------------------------------------------------
 void GRMainWindow::OnChangeNickMenu(wxCommandEvent &event)
@@ -2917,7 +2925,7 @@ void GRMainWindow::makeGameListMenu(wxListCtrl *list, wxMenu *gameMenu, int inde
 		return;
 	}
 
-	sort(user->gamesList.begin(), user->gamesList.end());
+	sort(user->gamesList.begin(), user->gamesList.end(), sortPluginByName());
 
 	for(x = 0; x < user->gamesList.size(); x++)
 	{

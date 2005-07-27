@@ -43,6 +43,7 @@ GRGameRoomWindow::GRGameRoomWindow(const wxFrame *parent,const wxString &title, 
 	CentreOnScreen();
 
 	gameRoom = 0;
+	active = true;
 }
 //-----------------------------------------------------------------------------------
 GRGameRoomWindow::~GRGameRoomWindow()
@@ -50,7 +51,7 @@ GRGameRoomWindow::~GRGameRoomWindow()
 	wxUint32 x;
 	vector <GRGameRoomWindow*>::iterator it;
 	GRGameRoomWindow *window;
-	gameRoom->currentPlayers--;
+	if(active) gameRoom->currentPlayers--;
 	if(mainWindow == NULL) return;
 	mainWindow->updateGameRoomPlayerCountString(gameRoom);
 
@@ -69,7 +70,12 @@ GRGameRoomWindow::~GRGameRoomWindow()
 	for(x = 0; x < users.size(); x++) delete(users[x]);
 	users.clear();
 	mainWindow->currentGameRoom = NULL;
-	if(userListBox->GetItemCount() > 0) mainWindow->sendGRPacket(LEAVE_GAME_ROOM, 0, NULL);
+	if(active) mainWindow->sendGRPacket(LEAVE_GAME_ROOM, 0, NULL);
+	if(actionButton->GetLabel() == "Abort") {
+		mainWindow->sendGRPacket(ABORT_GAME_ROOM, 0, NULL);
+		mainWindow->gameRoomWillClose = true;
+	}
+
 	mainWindow->currentRoomID = 0;
 	
 }
@@ -229,10 +235,13 @@ void GRGameRoomWindow::userJoined(GR_PACKET *Packet)
 	nickname = mainWindow->bufToStr(ptr);
 	ptr += nickname.Len() + 1;
 
+	user = new GRUser(nickname, userID, iconID);
+
 	//game list
+	mainWindow->parseGamesListForUser(user, ptr);
 	ptr += *(ptr)+1;
 
-	user = new GRUser(nickname, userID, iconID);
+	
 	user->SetStatus(status);
 	AddUser(user, true);
 	gameRoom->currentPlayers++;
@@ -332,6 +341,7 @@ void GRGameRoomWindow::RemoveUser(GRUser *User)
 		addTextWithColor(wxT("<< You have been kicked from the room >>"), *wxRED);
 		userListBox->ClearAll();
 		mainWindow->currentGameRoom = NULL;
+		active = false;
 	}
 	else {
 		addTextWithColor(wxT("<< ") + User->nick + wxT(" has left the room >>\n"), *wxRED);

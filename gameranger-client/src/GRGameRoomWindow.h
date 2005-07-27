@@ -80,6 +80,8 @@ public:
 	//create controls
 	void createControls();
 
+	bool active;
+
 	DECLARE_EVENT_TABLE()
 };
 

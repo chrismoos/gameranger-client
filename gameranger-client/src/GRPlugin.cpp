@@ -36,15 +36,7 @@ GRPlugin::~GRPlugin()
 	if(image != NULL) delete(image);
 }
 //---------------------------------------------------------------------
-bool operator < (const GRPlugin& plug1, const GRPlugin& plug2)
-{ 
-	return plug1.gameName.GetChar(0) < plug2.gameName.GetChar(0);
-}
 
-bool operator == (const GRPlugin& plug1, const GRPlugin &plug2)
-{ 
-	return plug1.gameName.GetChar(0) == plug2.gameName.GetChar(0);
-}
 //---------------------------------------------------------------------------
 void GRPlugin::LoadFromFile(wxString filename)
 {

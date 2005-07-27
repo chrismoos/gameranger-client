@@ -12,6 +12,7 @@ Fixed problem with sorting in game room user list(host should be on top).
 Added right mouse click on users in game rooms.
 Added sorting to user's game lists.
 Added option to save your password in the login dialog.
+Added sorting of games list to be alphabetical(not case sensitive).
 
 7/1/05 - 
 

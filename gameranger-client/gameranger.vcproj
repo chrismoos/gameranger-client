@@ -124,7 +124,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="C:\wxWindows-2.4.2/include"/>
+				AdditionalIncludeDirectories="C:\wxWindows-2.6.1/include"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
