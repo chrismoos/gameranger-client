@@ -57,6 +57,7 @@ public:
 	wxMenu *accountsMenu;
 	wxMenu *fileMenu;
 	wxMenu *aboutMenu;
+	wxMenu *hostMenu;
 	wxMenu *optionsMenu;
 	wxComboBox *lobbyComboBox;
 	wxTextCtrl *chatTextCtrl;
@@ -84,9 +85,10 @@ public:
 
 	//Events
 	void MenuExit(wxCommandEvent &event);
+	void OnHostRoomMenu(wxCommandEvent &event);
 	void MenuLogout(wxCommandEvent &event);
 	void OnComboBoxSelect(wxCommandEvent &event);
-	void OnTimer();
+	void OnTimer(wxTimerEvent &evt);
 	void OnChatEditEnter(wxCommandEvent &event);
 	void OnLoginMenu(wxCommandEvent &event);
 	void OnRegisterMenu(wxCommandEvent &event);
@@ -183,6 +185,7 @@ public:
 	void gameRoomUserList(GR_PACKET *Packet);
 	void gameRoomStatusChanged(GR_PACKET *Packet);
 	void setGameRoomListInfo(GRGameRoom *gameRoom);
+	void gameRoomLaunched(GR_PACKET *Packet);
 
 	//Plugins
 	void loadPlugins();
@@ -277,7 +280,8 @@ enum {
 	CHANGE_ICON_MENU_ITEM,
 	FIND_PLAYER_MENU,
 	GAMES_LIST_MENU,
-	CHANGE_MY_GAMES_ITEM
+	CHANGE_MY_GAMES_ITEM,
+	HOST_MENU_ITEM
 };
 
 #endif

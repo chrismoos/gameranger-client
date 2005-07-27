@@ -55,6 +55,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define PLAYER_LEFT_GAME_ROOM 0x21
 #define PLAYER_JOINED_MY_GAME_ROOM 0x22
 #define PLAYER_LEFT_MY_GAME_ROOM 0x23
+#define HOST_GAME_ROOM 0x24
 #define LEAVE_GAME_ROOM 0x27
 #define SEND_LOBBY_CHAT_MESSAGE 0x28
 #define LOBBY_CHAT_MESSAGE 0x29
@@ -74,6 +75,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define REG_USER_INFO 0x40
 #define USER_IS_IDLE 0x43
 #define USER_IS_ACTIVE 0x44
+#define GAME_LAUNCH_LOADING 0x57
+#define GAME_ROOM_IS_LOADING 0x58
+#define GAME_LAUNCH_DONE 0x59
+#define GAME_ROOM_LAUNCHED 0x5A
+#define ABORT_GAME_ROOM 0x5B
 #define GAME_ROOM_NO_LATE_JOINERS 0x5E
 #define GAME_ROOM_STATUS_CHANGED 0x5F
 #define CHANGE_ACCOUNT_PASSWORD 0x52
@@ -242,5 +248,18 @@ struct GR_ROOM_STATUS_CHANGED {
 	wxUint32 roomID;
 	wxUint32 status;
 };
+
+//==================================================
+//Host a game room
+//==================================================
+struct GR_HOST_GAME_ROOM {
+	wxUint32 gameID;
+	wxUint32 maxPlayers;
+	wxUint32 unknown; /* 0xffffff */
+	wxUint32 lateJoiners;
+};
+
+
+
 
 #endif

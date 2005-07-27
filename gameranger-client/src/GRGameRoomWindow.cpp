@@ -19,6 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <windows.h>
 #include "GRGameRoomWindow.h"
 #include "GRMainWindow.h"
 #include "GRGameRoom.h"
@@ -64,8 +65,10 @@ GRGameRoomWindow::~GRGameRoomWindow()
 			break;
 		}
 	}
+
 	for(x = 0; x < users.size(); x++) delete(users[x]);
-	mainWindow->currentGameRoom = 0;
+	users.clear();
+	mainWindow->currentGameRoom = NULL;
 	mainWindow->sendGRPacket(LEAVE_GAME_ROOM, 0, NULL);
 	
 }
@@ -73,6 +76,7 @@ GRGameRoomWindow::~GRGameRoomWindow()
 void GRGameRoomWindow::createControls()
 {
 	wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer *rightSizer = new wxBoxSizer(wxVERTICAL);
 
 	//Add chat edit field
 	chatEditField = new wxTextCtrl(this, GAMEROOM_CHATEDIT_ID, wxT(""), wxDefaultPosition,
@@ -84,18 +88,28 @@ void GRGameRoomWindow::createControls()
 
 	//Add user list box
 	userListBox = new wxListCtrl(this, GAMEROOM_USERLIST_ID, wxDefaultPosition,
-		wxSize(180, 300), wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_SORT_ASCENDING  | wxLC_NO_HEADER | wxLC_ALIGN_LEFT);
+		wxSize(180, 400), wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_SORT_ASCENDING  | wxLC_NO_HEADER | wxLC_ALIGN_LEFT);
 	userListBox->InsertColumn(0, wxT("nick"), wxLIST_FORMAT_LEFT, 175);
+
+	/* Add join/host/abort button */
+	actionButton = new wxButton(this, GAMEROOM_ACTION_BUTTON_ID, wxT("Null"), 
+		wxDefaultPosition, wxDefaultSize);
+
 
 	chatEditField->SetFocus();
 
 	wxBoxSizer *leftSizer = new wxBoxSizer(wxVERTICAL);
-	leftSizer->Add(chatWindow, 0, wxALL, 0);
+	leftSizer->Add(chatWindow, 1, wxALL, 0);
 	leftSizer->Add(chatEditField, 0, wxTOP, 5);
 
+	/* right sizer */
+	rightSizer->Add(userListBox, 1, wxALL | wxGROW, 0);
+	rightSizer->Add(actionButton, 0, wxTOP, 5);
+
 	//Add stuff to sizer
-	sizer->Add(leftSizer, 0, wxALL, 5);
-	sizer->Add(userListBox, 0, wxRIGHT | wxTOP | wxBOTTOM | wxGROW, 5);
+	sizer->Add(leftSizer, 0, wxALL | wxGROW, 5);
+	sizer->Add(rightSizer, 0, wxRIGHT | wxTOP | wxBOTTOM | wxGROW, 5);
+	//sizer->Add(userListBox, 0, wxRIGHT | wxTOP | wxBOTTOM | wxGROW, 5);
 
 	//Activate Sizer
 	SetAutoLayout(true);
@@ -349,4 +363,50 @@ void GRGameRoomWindow::OnUserDoubleClick(wxListEvent& event)
     mainWindow->privateMessages.push_back(pm);
 }
 //--------------------------------------------------------------------------
-
+void GRGameRoomWindow::deleteUsers()
+{
+	userListBox->DeleteAllItems();
+	for(int x = 0; x < users.size(); x++) delete(users[x]);
+	users.clear();
+}
+//-------------------------------------------------------------------------------
+void GRGameRoomWindow::OnButtonClick(wxCommandEvent &event)
+{
+	wxString actionMsg = actionButton->GetLabel();
+	
+	/* start game(hosts only) */
+	if(actionMsg == "Start") {
+		mainWindow->sendGRPacket(GAME_LAUNCH_LOADING, 0, NULL);
+		mainWindow->sendGRPacket(GAME_LAUNCH_DONE, 0, NULL);
+		this->gameRoom->status += 8;
+		mainWindow->setGameRoomListInfo(gameRoom);
+		actionButton->SetLabel("Abort");
+		addTextWithColor(wxT("<< Starting game >>\n"), *wxRED);
+#ifdef WIN32
+		ShellExecute(NULL, "Open", 
+			"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear\\UrbanOperations.exe", 
+			"-server 2346", 
+			"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear", SW_NORMAL);
+#endif
+	}
+	else if(actionMsg == "Abort") { /* abort game(hosts and players) */
+		mainWindow->sendGRPacket(ABORT_GAME_ROOM, 0, NULL);
+		if(this->gameRoom->grID == mainWindow->myUserID) {
+			actionButton->SetLabel("Start");
+		}
+		else {
+			actionButton->SetLabel("Join");
+		}
+		addTextWithColor(wxT("<< Aborted game >>\n"), *wxRED);
+	}
+	else if(actionMsg == "Join") { /* players only */
+		actionButton->SetLabel("Abort");
+#ifdef WIN32
+		ShellExecute(NULL, "Open", 
+			"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear\\UrbanOperations.exe", 
+			wxString::Format("-client %s 2346", gameRoom->ip), 
+			"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear", SW_NORMAL);
+#endif
+	}
+}
+//--------------------------------------------------------------------------------

@@ -30,7 +30,7 @@ GRIconCache::GRIconCache()
 	wxBitmap pic3(path+wxT("/images/defaulticon.xpm"), wxBITMAP_TYPE_XPM);
 	defaultIcon->SetIconID(0);
 	defaultIcon->imageIndex = 0;
-	defaultIcon->image = new wxImage(pic3);
+	defaultIcon->image = new wxImage(pic3.ConvertToImage());
 	Icons.push_back(defaultIcon);
 }
 //-----------------------------------------------------------------------

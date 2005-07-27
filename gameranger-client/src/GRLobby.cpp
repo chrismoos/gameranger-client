@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRLogWindow.h"
 #include "GRIcon.h"
 #include "GRIconCache.h"
+#include "GRGameRoom.h"
 #include "memdebug.h"
 
 GRLobby::GRLobby(wxString name, wxUint32 ID, wxUint8 type)
@@ -354,6 +355,7 @@ void GRLobby::userIsIdle(GR_PACKET *Packet)
 	wxUint32 userID;
 	wxUint8 *ptr;
 	GRUser *user;
+	GRGameRoom *gameRoom;
 
 	ptr = Packet->payload;
 
@@ -369,6 +371,18 @@ void GRLobby::userIsIdle(GR_PACKET *Packet)
 	//update in listbox
 	mainWindow->setListInfo(user);
 
+	/* if user is hosting a game, update game idle/not idle */
+	for(int x = 0; x < mainWindow->GameRooms.size(); x++) {
+		gameRoom = (GRGameRoom*)mainWindow->GameRooms[x];
+
+		/* the user is hosting */
+		if(gameRoom->grID == userID) {
+			gameRoom->status += 1;
+			mainWindow->setGameRoomListInfo(gameRoom);
+			break;
+		}
+	}
+
 	//notify in main window
 	//mainWindow->chatTextCtrl->AppendText(wxT("<< ")+user->nick+wxT(" is idle >>\n"));
 }
@@ -378,6 +392,7 @@ void GRLobby::userIsActive(GR_PACKET *Packet)
 	wxUint32 userID;
 	wxUint8 *ptr;
 	GRUser *user;
+	GRGameRoom *gameRoom;
 
 	ptr = Packet->payload;
 
@@ -392,6 +407,18 @@ void GRLobby::userIsActive(GR_PACKET *Packet)
 
 	//update in listbox
 	mainWindow->setListInfo(user);
+
+	/* if user is hosting a game, update game idle/not idle */
+	for(int x = 0; x < mainWindow->GameRooms.size(); x++) {
+		gameRoom = (GRGameRoom*)mainWindow->GameRooms[x];
+
+		/* the user is hosting */
+		if(gameRoom->grID == userID) {
+			gameRoom->status -= 1;
+			mainWindow->setGameRoomListInfo(gameRoom);
+			break;
+		}
+	}
 
 	//notify in main window
 	//mainWindow->chatTextCtrl->AppendText(wxT("<< ")+user->nick+wxT(" is now active >>\n"));

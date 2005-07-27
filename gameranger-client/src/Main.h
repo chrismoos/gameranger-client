@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRChangeIconWindow.h"
 #include "GRFindPlayerWindow.h"
 #include "GRChangeMyGames.h"
+#include "GRHostWindow.h"
 
 class GRMainWindow;
 
@@ -74,6 +75,7 @@ BEGIN_EVENT_TABLE(GRMainWindow, wxFrame)
 	EVT_MENU(USER_LIST_MENU_GET_INFO, GRMainWindow::OnUserListGetInfo)
 	EVT_MENU(CHANGE_ICON_MENU_ITEM, GRMainWindow::OnChangeIconMenu)
 	EVT_MENU(FIND_PLAYER_MENU, GRMainWindow::OnFindPlayerMenu)
+	EVT_MENU(HOST_MENU_ITEM, GRMainWindow::OnHostRoomMenu)
 	EVT_MENU(CHANGE_MY_GAMES_ITEM, GRMainWindow::OnChangeMyGamesMenu)
 	EVT_SOCKET(SOCKET_ID1, GRMainWindow::OnSocketEvent)
 	EVT_COMBOBOX(COMBOBOX_ID, GRMainWindow::OnComboBoxSelect)
@@ -102,6 +104,7 @@ END_EVENT_TABLE()
 BEGIN_EVENT_TABLE(GRGameRoomWindow, wxFrame)
 	EVT_TEXT_ENTER(GAMEROOM_CHATEDIT_ID, GRGameRoomWindow::OnChatEditEnter)
 	EVT_LIST_ITEM_ACTIVATED(GAMEROOM_USERLIST_ID, GRGameRoomWindow::OnUserDoubleClick)
+	EVT_BUTTON(GAMEROOM_ACTION_BUTTON_ID, GRGameRoomWindow::OnButtonClick)
 END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE(GRFindPlayerWindow, wxFrame)
@@ -109,5 +112,9 @@ BEGIN_EVENT_TABLE(GRFindPlayerWindow, wxFrame)
 	EVT_LIST_ITEM_ACTIVATED(RESULTS_LIST_ID, GRFindPlayerWindow::OnUserDoubleClick)
 END_EVENT_TABLE()
 
+BEGIN_EVENT_TABLE(GRHostWindow, wxFrame)
+	EVT_BUTTON(HOST_BUTTON_ID, GRHostWindow::OnHostButton)
+	EVT_COMBOBOX(HOST_GAME_COMBO_LIST, GRHostWindow::OnGameComboBoxSelect)
+END_EVENT_TABLE()
 
 #endif

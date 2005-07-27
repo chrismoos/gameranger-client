@@ -147,7 +147,12 @@ void GRLoginWindow::loadProfiles()
 	GRProfile *profile;
 	wxInt32 index;
 
-	if(!dir.Exists(wxGetCwd()+wxT("/profiles"))) return;
+	if(!dir.Exists(wxGetCwd()+wxT("/profiles"))) {
+		wxMessageDialog *dlg = new wxMessageDialog(this, wxT("Error: Profile directory does not exist. Please create it and try again."), wxT("Directory Error"), wxICON_ERROR);
+		dlg->ShowModal();
+		delete(dlg);
+		return;
+	}
 		
 	dir.Open(wxGetCwd()+wxT("/profiles"));
 

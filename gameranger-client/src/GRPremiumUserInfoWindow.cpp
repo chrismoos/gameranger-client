@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "memdebug.h"
 
 GRPremiumUserInfoWindow::GRPremiumUserInfoWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size)
-		: wxFrame((wxFrame *) parent, -1, title, pos, size, wxSYSTEM_MENU | wxCAPTION)
+		: wxFrame((wxFrame *) parent, -1, title, pos, size)
 {
 	//Set some generic window options
 	SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));

@@ -40,10 +40,12 @@ public:
 	wxTextCtrl *chatWindow;
 	wxTextCtrl *chatEditField;
 	wxListCtrl *userListBox;
+	wxButton *actionButton;
 
 	//Events
 	void OnChatEditEnter(wxCommandEvent &event);
 	void OnUserDoubleClick(wxListEvent& event);
+	void OnButtonClick(wxCommandEvent &event);
 
 	//Main Window
 	GRMainWindow *mainWindow;
@@ -58,6 +60,7 @@ public:
 	GRUser *findUser(wxUint32 userID);
 	void userLeft(GR_PACKET *Packet);
 	void RemoveUser(GRUser *User);
+	void deleteUsers();
 
 	//Chat
 	void chatMessage(GR_PACKET *Packet, int type);
@@ -76,7 +79,8 @@ public:
 enum {
 	GAMEROOM_CHATEDIT_ID = wxID_HIGHEST+120,
 	GAMEROOM_CHATLOG_ID,
-	GAMEROOM_USERLIST_ID
+	GAMEROOM_USERLIST_ID,
+	GAMEROOM_ACTION_BUTTON_ID
 };
 
 #endif

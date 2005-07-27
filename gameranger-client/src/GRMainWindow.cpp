@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRLoginWindow.h"
 #include "GRLogWindow.h"
 #include "GRSecurity.h"
+#include "GRHostWindow.h"
 #include "GRConnectStatusWindow.h"
 #include "GRLobby.h"
 #include "GRUser.h"
@@ -89,9 +90,13 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 	aboutMenu = new wxMenu();
 	aboutMenu->Append(ABOUT_MENU_ABOUT, wxT("&About"));
 
+	hostMenu = new wxMenu();
+	hostMenu->Append(HOST_MENU_ITEM, wxT("Host"));
+
 	menuBar = new wxMenuBar();
 	menuBar->Append(fileMenu, wxT("&File"));
 	menuBar->Append(accountsMenu, wxT("&Accounts"));
+	menuBar->Append(hostMenu, wxT("&Game Rooms"));
 	menuBar->Append(optionsMenu, wxT("&Options"));
 	menuBar->Append(usersMenu, wxT("&Users"));
 	menuBar->Append(aboutMenu, wxT("&Help"));
@@ -161,7 +166,7 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 	packetCounter = 0;
 
 	currentProfile = 0;
-	currentGameRoom = 0;
+	currentGameRoom = NULL;
 	currentPremiumInfoWindow = NULL;
 	searchWindow = NULL;
 
@@ -208,22 +213,22 @@ GRMainWindow::~GRMainWindow()
 void GRMainWindow::cleanupGR()
 {
 	int x;
-	for(x = 0; x < Lobbies.size(); x++)
+	for(x = 0; x < (int)Lobbies.size(); x++)
 	{
 		delete(Lobbies[x]);
 	}
 	Lobbies.clear();
-	for(x = 0; x < GameRooms.size(); x++)
+	for(x = 0; x < (int)GameRooms.size(); x++)
 	{
 		delete(GameRooms[x]);
 	}
 	GameRooms.clear();
-	for(x = 0; x < privateMessages.size(); x++)
+	for(x = 0; x < (int)privateMessages.size(); x++)
 	{
 		delete(privateMessages[x]);
 	}
 	privateMessages.clear();
-	for(x = 0; x < gameRoomWindows.size(); x++)
+	for(x = 0; x < (int)gameRoomWindows.size(); x++)
 	{
 		delete(gameRoomWindows[x]);
 	}
@@ -244,7 +249,8 @@ void GRMainWindow::Login(char *email, char *password)
 	testPacket(wxT("data/0000001A.bin"));
 	testPacket(wxT("data/0000000A.bin"));
 	testPacket(wxT("data/00000038.bin"));
-	testPacket(wxT("data/0000005F.bin"));*/
+	testPacket(wxT("data/0000005F.bin"));
+	testPacket(wxT("data/0000001F.bin"));*/
 	//testPacket(wxT("data/000000D1.bin"));
 	//testPacket(wxT("data/000000D3.bin"));
 	//testPacket(wxT("data/0000000B.bin"));
@@ -258,17 +264,17 @@ void GRMainWindow::createControls()
 
 
 	gameRoomList = new wxListView(this, GAMELIST_ID, wxDefaultPosition,
-		wxSize(500, 200), wxLC_REPORT | wxLC_SORT_ASCENDING | wxLC_SINGLE_SEL | wxLC_ALIGN_LEFT);
+		wxSize(510, 215), wxLC_REPORT | wxLC_SORT_ASCENDING | wxLC_SINGLE_SEL | wxLC_ALIGN_LEFT);
 	gameRoomList->AssignImageList(imgList, wxIMAGE_LIST_SMALL);
-	gameRoomList->InsertColumn(0, wxT("Game Name"), wxLIST_FORMAT_LEFT, 185);
+	gameRoomList->InsertColumn(0, wxT("Game Name"), wxLIST_FORMAT_LEFT, 175);
 	gameRoomList->InsertColumn(1, wxT("Host"), wxLIST_FORMAT_LEFT, 155);
 	gameRoomList->InsertColumn(2, wxT("Description"), wxLIST_FORMAT_LEFT, 250);
 	gameRoomList->InsertColumn(3, wxT("IP Address"), wxLIST_FORMAT_LEFT, 100);
-	gameRoomList->InsertColumn(4, wxT(""), wxLIST_FORMAT_LEFT, 45);
+	gameRoomList->InsertColumn(4, wxT(""), wxLIST_FORMAT_LEFT, 50);
 	gameRoomList->SetColumnImage(4, 0);
-	gameRoomList->InsertColumn(5, wxT(""), wxLIST_FORMAT_LEFT, 30);
+	gameRoomList->InsertColumn(5, wxT(""), wxLIST_FORMAT_LEFT, 34);
 	gameRoomList->SetColumnImage(5, 2);
-	gameRoomList->InsertColumn(6, wxT(""), wxLIST_FORMAT_LEFT, 30);
+	gameRoomList->InsertColumn(6, wxT(""), wxLIST_FORMAT_LEFT, 34);
 	gameRoomList->SetColumnImage(6, 1);
 
 	
@@ -586,6 +592,12 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 			delete(msgDlg);
 		break;
 
+		case GAME_ROOM_INVALID_PASSWORD:
+			msgDlg = new wxMessageDialog(this, wxT("The game room password you specified is invalid."), wxT("Join room error"), wxICON_ERROR);
+			msgDlg->ShowModal();
+			delete(msgDlg);
+		break;
+
 		case PASSWORD_CHANGE_SUCCESSFUL:
 			msgDlg = new wxMessageDialog(this, wxT("Your password was successfully changed."), wxT("Password change"), wxICON_INFORMATION);
 			msgDlg->ShowModal();
@@ -626,6 +638,10 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 			gameRoomStatusChanged(Packet);
 		break;
 
+		case GAME_ROOM_LAUNCHED:
+			gameRoomLaunched(Packet);
+		break;
+
 		default:
 			if(logWindow != NULL)
 			{
@@ -635,6 +651,29 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 	}
 }
 //------------------------------------------------------------------------------
+void GRMainWindow::gameRoomLaunched(GR_PACKET *Packet)
+{
+	wxString pass = bufToStr(Packet->payload);
+
+	if(currentGameRoom == NULL) /* we aren't in a room */
+        return;
+
+	currentGameRoom->gameRoom->status += 8;
+	setGameRoomListInfo(currentGameRoom->gameRoom);
+
+	/* if we are hosting, change button to abort */
+	if(currentGameRoom->gameRoom->grID == myUserID) {
+		currentGameRoom->actionButton->SetLabel(wxT("Abort"));
+	}
+	else { /* enable join button */
+		currentGameRoom->actionButton->Enable(true);
+	}
+
+	/* now all packets from GR have halted, once we return, it will send us game room list, lobby list, etc,. */
+	currentGameRoom->addTextWithColor(wxT("<< The host has started the game >>\n"), *wxRED);
+	currentGameRoom->addTextWithColor(wxT("<< Game Room Password: ")+pass+wxT(" >>\n"), *wxRED);
+}
+//--------------------------------------------------------------------------------
 void GRMainWindow::invalidAccount()
 {
 	wxMessageDialog *msgDlg = new wxMessageDialog(this, wxT("The account you specified is either invalid or hasn't been activated, please check your email and try again."), wxT("Login Error"), wxICON_ERROR);
@@ -661,6 +700,13 @@ void GRMainWindow::gameRoomsList(GR_PACKET *Packet)
 	memcpy(&gameCount, buf, sizeof(wxUint32));
 	gameCount = ntohl(gameCount);
 	buf += sizeof(wxUint32);
+
+	gameRoomList->DeleteAllItems();
+	for(x = 0; x < (int)GameRooms.size(); x++)
+	{
+		delete(GameRooms[x]);
+	}
+	GameRooms.clear();
 
 	for(x = 0; x < gameCount; x++)
 	{
@@ -821,6 +867,13 @@ void GRMainWindow::publicLobbyList(GR_PACKET *Packet)
 	memcpy(&lobbyCount, buf, sizeof(wxUint32));
 	lobbyCount = ntohl(lobbyCount);
 	buf += sizeof(wxUint32);
+
+	for(x = 0; x < Lobbies.size(); x++)
+	{
+		delete(Lobbies[x]);
+	}
+	Lobbies.clear();
+	lobbyComboBox->Clear();
 
 
 	for(x = 0; x < lobbyCount; x++)
@@ -1019,7 +1072,8 @@ void GRMainWindow::sendGRPacket(wxUint32 command, wxUint32 payloadLength, wxUint
 
 	logWindow->logData(packet, len);
 
-	m_socket->Write(packet, len);
+	if(m_socket->IsConnected())
+		m_socket->Write(packet, len);
 
 	delete[] packet;
 }
@@ -1354,6 +1408,40 @@ void GRMainWindow::addGameRoom(wxUint32 gameRoomID, wxUint32 gameCode, wxUint32 
 		str = wxT("<< ") + room->host + wxT(" has started a ") + room->Plugin->gameName + wxT(" room >>");
 		chatTextCtrl->AppendText(str+wxT("\n"));
 	}
+
+	/* if we are hosting it and it doesn't already exist, open window accordingly */
+	if(room->grID == this->myUserID) {
+		if(currentGameRoom != NULL) {
+			currentGameRoom->SetFocus();
+			return;
+		}
+		GRGameRoomWindow *gameRoom = new GRGameRoomWindow(this, room->Plugin->gameName+wxT(" - ")+room->host, wxDefaultPosition, wxDefaultSize);
+		wxIcon roomIcon;
+
+		gameRoom->mainWindow = this;
+		gameRoom->gameRoom = room;
+	
+
+		if(room->Plugin->image != NULL) 
+		{
+			roomIcon.CopyFromBitmap(wxBitmap(room->Plugin->image));
+		}
+
+		gameRoom->SetIcon(roomIcon);
+		gameRoom->userListBox->SetImageList(iconImgList, wxIMAGE_LIST_SMALL);
+		gameRoom->addTextWithColor(wxT("Description: ")+room->description+wxT("\n\n"), *wxRED);
+		gameRoomWindows.push_back(gameRoom);
+		currentGameRoom = gameRoom;
+
+		GRUser *user = new GRUser(room->host, room->grID, room->iconID);
+		user->SetStatus(status);
+		currentGameRoom->AddUser(user, false);
+		currentGameRoom->actionButton->SetLabel(wxT("Start"));
+
+		setGameRoomListInfo(currentGameRoom->gameRoom);
+		updateGameRoomPlayerCountString(currentGameRoom->gameRoom);
+		gameRoom->Show(true);
+	}
 }
 //-----------------------------------------------------------------------------
 GRPlugin *GRMainWindow::findPluginByCode(wxUint32 gameCode)
@@ -1475,6 +1563,14 @@ void GRMainWindow::gameRoomClosed(GR_PACKET *Packet)
 			gameRoomList->DeleteItem(index);
 			str = wxT("<< ") + room->host + wxT(" has closed a ") + room->Plugin->gameName + wxT(" room >>");
 			chatTextCtrl->AppendText(str+wxT("\n"));
+
+			/* check if it's our current game room */
+			if(currentGameRoom != NULL) {
+				if(currentGameRoom->gameRoom->gameRoomID == roomID) {
+					currentGameRoom->addTextWithColor(wxT("<< The room has been closed >>\n"), *wxRED);
+				}
+			}
+
 			it = GameRooms.begin()+x;
 			GameRooms.erase(it);
 			delete(room);
@@ -1565,7 +1661,7 @@ wxUint32 GRMainWindow::getPacketCounterByte(wxUint32 command, wxUint32 payloadLe
 	return r0;
 }
 //-------------------------------------------------------------------------------
-void GRMainWindow::OnTimer()
+void GRMainWindow::OnTimer(wxTimerEvent &evt)
 {
 	logWindow->logText(wxT("Wrote pulse."));
 	sendGRPacket(GR_ALIVE_PULSE, 0, NULL);
@@ -1785,6 +1881,7 @@ void GRMainWindow::purgeIcons()
 	wxInt32 index;
 	GRUser *user;
 
+	/* update in lobby */
 	for(x = 0; x < currentLobby->Users.size(); x++)
 	{
 		user = currentLobby->Users[x];
@@ -1802,6 +1899,22 @@ void GRMainWindow::purgeIcons()
 		}
 	}
 
+	/* update in gameroom if we are in one */
+	if(currentGameRoom != NULL) {
+		for(x = 0; x < currentGameRoom->users.size(); x++) {
+			user = currentGameRoom->users[x];
+
+			if(user->icon == NULL && user->iconID != 0) {
+				user->icon = iconCache->findIcon(user->iconID);
+				if(user->icon != NULL) {
+					index = currentGameRoom->getUserItemIndex(user);
+					if(index != -1) {
+						currentGameRoom->userListBox->SetItemImage(index, user->icon->imageIndex, user->icon->imageIndex);
+					}
+				}
+			}
+		}
+	}
 
 }
 //------------------------------------------------------------------------------
@@ -1961,15 +2074,39 @@ void GRMainWindow::OnGameRoomDoubleClick(wxListEvent& event)
 
 	wxUint32 roomID;
 	wxUint8 null[1] = {0x00};
-	wxUint8 *payload = new wxUint8[sizeof(wxUint32)+1];
+	wxUint32 len = 1;
+	wxUint8 *payload;
+	wxString password = "";
+
+	if(room->isLocked()) {
+		wxTextEntryDialog *dlg = new wxTextEntryDialog(this, wxT("Please enter the password for the game room"), wxT("Game room password required"), wxT(""),wxOK | wxCANCEL);
+		if(dlg->ShowModal() == wxID_OK) {
+			password = dlg->GetValue();
+			len += password.Length();
+			delete(dlg);
+		}
+		else {
+			delete(dlg);
+			return;
+		}
+	}
+
+	len += sizeof(wxUint32);
+	payload = new wxUint8[len];
 	
 	roomID = room->gameRoomID;
 	roomID = wxUINT32_SWAP_ON_LE(roomID);
 
 	memcpy(payload, (wxUint8*)&roomID, sizeof(wxUint32));
-	memcpy(payload+sizeof(wxUint32), null, 1);
 
-	sendGRPacket(JOIN_GAME_ROOM, sizeof(wxUint32)+1, payload);
+	if(room->isLocked()) {
+		memcpy(payload+sizeof(wxUint32), (wxUint8*)(const char*)password.mb_str(), password.Length()+1);
+	}
+	else {
+		memcpy(payload+sizeof(wxUint32), null, 1);
+	}
+
+	sendGRPacket(JOIN_GAME_ROOM, len, payload);
 	delete[] payload;
 }
 //---------------------------------------------------------------------------
@@ -1985,6 +2122,7 @@ void GRMainWindow::gameRoomUserList(GR_PACKET *Packet)
 	wxUint8 status;
 	wxUint32 roomID;
 	wxIcon roomIcon;
+	GRGameRoomWindow *gameRoom = NULL;
 
 	ptr = Packet->payload;
 
@@ -1996,29 +2134,69 @@ void GRMainWindow::gameRoomUserList(GR_PACKET *Packet)
 	room = findGameRoom(roomID);
 	if(room == NULL) return;
 
-	room->currentPlayers++;
-	updateGameRoomPlayerCountString(room);
+	
 
 	//user count
 	memcpy(&userCount, ptr, sizeof(wxUint32));
 	userCount = wxUINT32_SWAP_ON_LE(userCount);
 	ptr += sizeof(wxUint32);
 
-	GRGameRoomWindow *gameRoom = new GRGameRoomWindow(this, room->Plugin->gameName+wxT(" - ")+room->host, wxDefaultPosition, wxDefaultSize);
-	gameRoom->mainWindow = this;
-	gameRoom->gameRoom = room;
 	
 
-	if(room->Plugin->image != NULL) 
-	{
-		roomIcon.CopyFromBitmap(wxBitmap(room->Plugin->image));
+	if(currentGameRoom == NULL) {
+
+		gameRoom = new GRGameRoomWindow(this, room->Plugin->gameName+wxT(" - ")+room->host, wxDefaultPosition, wxDefaultSize);
+		gameRoom->mainWindow = this;
+		gameRoom->gameRoom = room;
+	
+
+		if(room->Plugin->image != NULL) 
+		{
+			roomIcon.CopyFromBitmap(wxBitmap(room->Plugin->image));
+		}
+
+		gameRoom->SetIcon(roomIcon);
+		gameRoom->userListBox->SetImageList(iconImgList, wxIMAGE_LIST_SMALL);
+		gameRoom->addTextWithColor(wxT("Description: ")+room->description+wxT("\n\n"), *wxRED);
+		gameRoomWindows.push_back(gameRoom);
+		currentGameRoom = gameRoom;
+		currentGameRoom->actionButton->SetLabel(wxT("Join"));
+
+		/* if game is started, enable button */
+		if(currentGameRoom->gameRoom->isPlaying()) {
+				currentGameRoom->actionButton->Enable(true);
+			}
+			else {
+				currentGameRoom->actionButton->Enable(false);
+			}
+	}
+	else {
+		if(currentGameRoom->gameRoom->gameRoomID == roomID) { /* host ended game */
+			gameRoom = currentGameRoom;		
+			currentGameRoom->addTextWithColor(wxT("<< The game has been aborted >>\n"), *wxRED);
+		}
+		/* if we are hosting, make the button say Start */
+		if(currentGameRoom->gameRoom->grID == this->myUserID) {
+			currentGameRoom->actionButton->SetLabel(wxT("Start"));
+		}
+		else {
+			currentGameRoom->actionButton->SetLabel(wxT("Join"));
+			
+			/* if game is started, enable button */
+			if(currentGameRoom->gameRoom->isPlaying()) {
+				currentGameRoom->actionButton->Enable(true);
+			}
+			else {
+				currentGameRoom->actionButton->Enable(false);
+			}
+		}
+		currentGameRoom->SetFocus();
+		currentGameRoom->deleteUsers();
+		currentGameRoom->gameRoom->currentPlayers = 0;	
+		
 	}
 
-	gameRoom->SetIcon(roomIcon);
-	gameRoom->userListBox->SetImageList(iconImgList, wxIMAGE_LIST_SMALL);
-	gameRoom->addTextWithColor(wxT("Description: ")+room->description+wxT("\n\n"), *wxRED);
-	gameRoomWindows.push_back(gameRoom);
-	currentGameRoom = gameRoom;
+	room->currentPlayers = userCount;
 
 	for(x = 0; x < userCount; x++)
 	{
@@ -2035,6 +2213,9 @@ void GRMainWindow::gameRoomUserList(GR_PACKET *Packet)
 		//status
 		status = *ptr;
 		ptr++;
+		if(currentGameRoom->gameRoom->grID == userID) {
+			currentGameRoom->gameRoom->status = status;
+		}
 
 		//nickname
 		nickname = bufToStr(ptr);
@@ -2045,10 +2226,14 @@ void GRMainWindow::gameRoomUserList(GR_PACKET *Packet)
 
 		user = new GRUser(nickname, userID, iconID);
 		user->SetStatus(status);
-		gameRoom->AddUser(user, false);
+		currentGameRoom->AddUser(user, false);
 	}
 
-	gameRoom->Show(true);
+	
+
+	setGameRoomListInfo(currentGameRoom->gameRoom);
+	updateGameRoomPlayerCountString(currentGameRoom->gameRoom);
+	currentGameRoom->Show(true);
 }
 //------------------------------------------------------------------------
 void GRMainWindow::OnChangeNickMenu(wxCommandEvent &event)
@@ -2459,7 +2644,7 @@ wxUint8 *GRMainWindow::makePluginsList()
 
 	//make our array and fill it
 	array = new int[pluginCount];
-	for(x = 0; x < Plugins.size(); x++)
+	for(x = 0; x < (int)Plugins.size(); x++)
 	{
 		array[x] = Plugins[x]->gameCode;
 	}
@@ -2687,7 +2872,7 @@ void GRMainWindow::makeGameListMenu(int index)
 	{
 		if(user->gamesList[x]->gameCode == 0xffffffff) continue;
 		gameItem = new wxMenuItem(gameListMenu, x);
-		gameItem->SetBitmap(user->gamesList[x]->image->ConvertToBitmap());
+		gameItem->SetBitmap(wxBitmap(user->gamesList[x]->image));
 		gameItem->SetText(user->gamesList[x]->gameName);
 		gameListMenu->Append(gameItem);
 	}
@@ -2732,19 +2917,15 @@ void GRMainWindow::gameRoomStatusChanged(GR_PACKET *Packet)
 	if(index == -1) return;
 
 	//update game room and list item
-	room->status = pck->status;
-	if(pck->status > 3) 
-	{
-		#ifdef WIN32 //windows won't show subitem images correctly, so just display text
-		gameRoomList->SetItem(index, 5, wxT("Yes"), -1);
-		#else
-		gameRoomList->SetItem(index, 5, wxT(""), 2);
-		#endif
+	if(pck->status == 0) {
+		room->status -= 8;
 	}
-	else  
-	{
-		gameRoomList->SetItem(index, 5, wxT(""), -1);
+	else {
+		room->status += 8;
 	}
+	
+
+
 
 	//update list item
 	setGameRoomListInfo(room);
@@ -2778,9 +2959,28 @@ void GRMainWindow::setGameRoomListInfo(GRGameRoom *gameRoom)
     
 	gameRoomList->SetItem(info);
 
+	/* if game room is playing or not */
+	if(gameRoom->isPlaying()) {
+		#ifdef WIN32 //windows won't show subitem images correctly, so just display text
+		gameRoomList->SetItem(index, 5, wxT("Yes"), -1);
+		#else
+		gameRoomList->SetItem(index, 5, wxT(""), 2);
+		#endif
+	}
+	else {
+		gameRoomList->SetItem(index, 5, wxT(""), -1);
+	}
+
 }
 //---------------------------------------------------------------------------
-
+void GRMainWindow::OnHostRoomMenu(wxCommandEvent &event)
+{
+	GRHostWindow *hostWindow = new GRHostWindow(this, wxT("Host Room"), wxDefaultPosition, wxDefaultSize);
+	hostWindow->mainWindow = this;
+	hostWindow->initListBoxes();
+	hostWindow->Show(true);
+}
+//---------------------------------------------------------------------------
 
 
 
