@@ -21,7 +21,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\wxWindows-2.4.2/lib/mswd,C:\wxWindows-2.4.2/include,C:\wxWindows-2.4.2/contrib/include"
+				AdditionalIncludeDirectories="&quot;C:\wxWidgets-2.6.1\lib\vc_lib\mswd&quot;;&quot;C:\wxWidgets-2.6.1/lib/mswd&quot;;&quot;C:\wxWidgets-2.6.1/include&quot;;&quot;C:\wxWidgets-2.6.1/contrib/include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_WINDOWS;WINVER=0x400;_MT;wxUSE_GUI=1;__WXDEBUG__;WXDEBUG=1"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -38,11 +38,11 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib comctl32.lib rpcrt4.lib wsock32.lib zlibd.lib regexd.lib pngd.lib jpegd.lib tiffd.lib wxmswd.lib wxxrcd.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib comctl32.lib rpcrt4.lib wsock32.lib wxzlibd.lib wxregexd.lib wxpngd.lib wxjpegd.lib wxtiffd.lib wxmsw26d_core.lib wxmsw26d_xrc.lib wxbase26d.lib wxbase26d_net.lib wxmsw26d_adv.lib wxmsw26d_gl.lib wxmsw26d_media.lib"
 				OutputFile=".\Debug/gameranger.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="C:\wxWindows-2.4.2/lib,C:\wxWindows-2.4.2/contrib/lib"
+				AdditionalLibraryDirectories="&quot;C:\wxWidgets-2.6.1/lib/vc_lib&quot;;&quot;C:\wxWidgets-2.6.1/contrib/lib&quot;"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Debug/gameranger.pdb"
 				SubSystem="2"
@@ -85,7 +85,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="C:\wxWindows-2.4.2/lib/msw,C:\wxWindows-2.4.2/include,C:\wxWindows-2.4.2/contrib/include"
+				AdditionalIncludeDirectories="&quot;C:\wxWidgets-2.6.1\lib\vc_lib\msw&quot;;&quot;C:\wxWidgets-2.6.1/lib/msw&quot;;&quot;C:\wxWidgets-2.6.1/include&quot;;&quot;C:\wxWidgets-2.6.1/contrib/include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_WINDOWS;WINVER=0x400;_MT;wxUSE_GUI=1"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
@@ -102,11 +102,11 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="odbc32.lib odbccp32.lib comctl32.lib rpcrt4.lib wsock32.lib zlib.lib regex.lib png.lib jpeg.lib tiff.lib wxmsw.lib wxxrc.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib comctl32.lib rpcrt4.lib wsock32.lib wxzlib.lib wxregex.lib wxpng.lib wxjpeg.lib wxtiff.lib wxmsw26_core.lib wxmsw26d_xrc.lib wxbase26.lib wxbase26_net.lib wxmsw26_adv.lib wxmsw26_gl.lib wxmsw26_media.lib"
 				OutputFile=".\Release/gameranger.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="C:\wxWindows-2.4.2/lib,C:\wxWindows-2.4.2/contrib/lib"
+				AdditionalLibraryDirectories="&quot;C:\wxWidgets-2.6.1/lib/vc_lib/&quot;;&quot;C:\wxWidgets-2.6.1/contrib/lib&quot;"
 				ProgramDatabaseFile=".\Release/gameranger.pdb"
 				SubSystem="2"
 				TargetMachine="1"/>
@@ -144,7 +144,31 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
 			<File
+				RelativePath=".\gameranger.rc">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCResourceCompilerTool"
+						AdditionalIncludeDirectories="&quot;C:\wxWidgets-2.6.1\include&quot;"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCResourceCompilerTool"
+						AdditionalIncludeDirectories="&quot;C:\wxWidgets-2.6.1\include&quot;"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\src\GRChangeIconWindow.cpp">
+			</File>
+			<File
+				RelativePath=".\src\GRChangeMyGames.cpp">
+			</File>
+			<File
 				RelativePath=".\src\GRConnecStatusWindow.cpp">
+			</File>
+			<File
+				RelativePath=".\src\GRFindPlayerWindow.cpp">
 			</File>
 			<File
 				RelativePath="src\GRGameRoom.cpp">
@@ -168,6 +192,21 @@
 			</File>
 			<File
 				RelativePath=".\src\GRGameRoomWindow.cpp">
+			</File>
+			<File
+				RelativePath=".\src\GRHostWindow.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="src\GRIcon.cpp">
@@ -310,6 +349,12 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\src\GRPremiumUserInfo.cpp">
+			</File>
+			<File
+				RelativePath=".\src\GRPremiumUserInfoWindow.cpp">
+			</File>
+			<File
 				RelativePath=".\src\GRPrivateMessage.cpp">
 			</File>
 			<File
@@ -393,6 +438,12 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\src\GRUserInfo.cpp">
+			</File>
+			<File
+				RelativePath=".\src\GRUserInfoWindow.cpp">
+			</File>
+			<File
 				RelativePath="src\Main.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -412,9 +463,6 @@
 						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath="..\..\..\..\..\wxWindows-2.4.2\include\wx\msw\wx.rc">
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -423,13 +471,25 @@
 				RelativePath="src\GRBaseDefs.h">
 			</File>
 			<File
+				RelativePath=".\src\GRChangeIconWindow.h">
+			</File>
+			<File
+				RelativePath=".\src\GRChangeMyGames.h">
+			</File>
+			<File
 				RelativePath="src\GRConnectStatusWindow.h">
+			</File>
+			<File
+				RelativePath=".\src\GRFindPlayerWindow.h">
 			</File>
 			<File
 				RelativePath="src\GRGameRoom.h">
 			</File>
 			<File
 				RelativePath=".\src\GRGameRoomWindow.h">
+			</File>
+			<File
+				RelativePath=".\src\GRHostWindow.h">
 			</File>
 			<File
 				RelativePath="src\GRIcon.h">
@@ -453,6 +513,12 @@
 				RelativePath="src\GRPlugin.h">
 			</File>
 			<File
+				RelativePath=".\src\GRPremiumUserInfo.h">
+			</File>
+			<File
+				RelativePath=".\src\GRPremiumUserInfoWindow.h">
+			</File>
+			<File
 				RelativePath=".\src\GRPrivateMessage.h">
 			</File>
 			<File
@@ -471,16 +537,28 @@
 				RelativePath="src\GRUser.h">
 			</File>
 			<File
+				RelativePath=".\src\GRUserInfo.h">
+			</File>
+			<File
+				RelativePath=".\src\GRUserInfoWindow.h">
+			</File>
+			<File
 				RelativePath="src\Main.h">
 			</File>
 			<File
 				RelativePath=".\resource.h">
+			</File>
+			<File
+				RelativePath=".\resource1.h">
 			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 		</Filter>
+		<File
+			RelativePath=".\CHANGE_LOG.txt">
+		</File>
 		<File
 			RelativePath="makefile">
 			<FileConfiguration
@@ -525,6 +603,9 @@
 				<Tool
 					Name="VCCustomBuildTool"/>
 			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\TODO.txt">
 		</File>
 	</Files>
 	<Globals>

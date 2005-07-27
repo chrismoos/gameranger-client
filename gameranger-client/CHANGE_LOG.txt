@@ -3,6 +3,41 @@ Gameranger Client
 Change Log
 ---------------------------------------------
 
+7/1/05 - 
+
+Added notification if the game room you are in has closed.
+Added game room color text(premium/idle).
+Added update of game room info in listview.
+Added detection of when host launches/ends game. 
+Added showing of game password when you join.
+Fixed problem for game status(playing or not playing).
+Added game room button(start/join/abort). (Launching needs to be enabled still).
+Added updating of icons in game rooms.
+Added support for locked game rooms.
+Added game room invalid password.
+Added game room hosting window.
+Added game room hosting support.
+
+12/30/04 -
+
+Added update of game status(playing or not).
+
+12/23/04 -
+
+Added updating of user icon in user lists.
+Added change icon support.
+Added Find users(by email, account, id, or nickname).
+Added Game Room private messages.
+Added banner support(saves in current directory).
+Added ability to right mouse click on a user and see his games list.
+Added ability to change your games list.
+
+12/24/04 - 
+
+Fixed crash when you finished regisration.
+Fixed crash on logout and exit menu.
+Updated profile to store user's games list.
+
 12/22/04 -
 
 Added memory leak detection for Visual studio.

@@ -1,3 +1,8 @@
+Fix idle room status. - June 5 2005
+
+
+OLD STUFF
+----------------------------------------
 Process game close when we are in game room.
 Right click user in game room.
 Game status.
