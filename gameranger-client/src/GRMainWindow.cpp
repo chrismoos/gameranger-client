@@ -1403,7 +1403,7 @@ void GRMainWindow::addGameRoom(wxUint32 gameRoomID, wxUint32 gameCode, wxUint32 
 		#ifdef WIN32 //windows won't show subitem images correctly, so just display text
 		gameRoomList->SetItem(index, 6, wxT("Yes"), -1);
 		#else
-		gameRoomList->SetItem(index, 6, wxT(""), 3);
+		gameRoomList->SetItem(index, 6, wxT(""), 1);
 		#endif
 	}
 
@@ -1417,7 +1417,7 @@ void GRMainWindow::addGameRoom(wxUint32 gameRoomID, wxUint32 gameCode, wxUint32 
 	if(announce == true) 
 	{	
 		str = wxT("<< ") + room->host + wxT(" has started a ") + room->Plugin->gameName + wxT(" room >>");
-		addTextWithColor(str+"\n", *wxRED);
+		addTextWithColor(str+wxT("\n"), *wxRED);
 	}
 
 	/* if we are hosting it and it doesn't already exist, open window accordingly */
@@ -1580,7 +1580,7 @@ void GRMainWindow::gameRoomClosed(GR_PACKET *Packet)
 			}
 			gameRoomList->DeleteItem(index);
 			str = wxT("<< ") + room->host + wxT(" has closed a ") + room->Plugin->gameName + wxT(" room >>");
-			addTextWithColor(str+"\n", *wxRED);
+			addTextWithColor(str+wxT("\n"), *wxRED);
 
 			/* check if it's our current game room */
 			if(currentGameRoom != NULL) {
@@ -2098,7 +2098,7 @@ void GRMainWindow::OnGameRoomDoubleClick(wxListEvent& event)
 	wxUint8 null[1] = {0x00};
 	wxUint32 len = 1;
 	wxUint8 *payload;
-	wxString password = "";
+	wxString password = wxT("");
 
 	if(room->isLocked()) {
 		wxTextEntryDialog *dlg = new wxTextEntryDialog(this, wxT("Please enter the password for the game room"), wxT("Game room password required"), wxT(""),wxOK | wxCANCEL);

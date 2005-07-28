@@ -36,7 +36,7 @@ wxUint32 encryptVerifyCode(wxUint32 code)
 	r0 = r0 * 0x34af;
 	r0 = r3 - r0;
 	memcpy(&temp, (wxUint8*)&r0, 4);
-	r3 = r3 + temp;
+	r3 = r3 +  wxUINT32_SWAP_ON_BE(temp);
 	return r3;
 }
 //--------------------------------------------------------------------------------------

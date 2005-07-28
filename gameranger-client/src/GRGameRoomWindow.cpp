@@ -19,7 +19,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#ifdef WIN32
 #include <windows.h>
+#endif
 #include "GRGameRoomWindow.h"
 #include "GRMainWindow.h"
 #include "GRGameRoom.h"
@@ -71,7 +73,7 @@ GRGameRoomWindow::~GRGameRoomWindow()
 	users.clear();
 	mainWindow->currentGameRoom = NULL;
 	if(active) mainWindow->sendGRPacket(LEAVE_GAME_ROOM, 0, NULL);
-	if(actionButton->GetLabel() == "Abort") {
+	if(actionButton->GetLabel() == wxT("Abort")) {
 		mainWindow->sendGRPacket(ABORT_GAME_ROOM, 0, NULL);
 		mainWindow->gameRoomWillClose = true;
 	}
@@ -406,7 +408,7 @@ void GRGameRoomWindow::OnButtonClick(wxCommandEvent &event)
 		mainWindow->sendGRPacket(GAME_LAUNCH_DONE, 0, NULL);
 		this->gameRoom->status += 8;
 		mainWindow->setGameRoomListInfo(gameRoom);
-		actionButton->SetLabel("Abort");
+		actionButton->SetLabel(wxT("Abort"));
 		addTextWithColor(wxT("<< Starting game >>\n"), *wxRED);
 #ifdef WIN32
 		ShellExecute(NULL, "Open", 
@@ -415,18 +417,18 @@ void GRGameRoomWindow::OnButtonClick(wxCommandEvent &event)
 			"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear", SW_NORMAL);
 #endif
 	}
-	else if(actionMsg == "Abort") { /* abort game(hosts and players) */
+	else if(actionMsg == wxT("Abort")) { /* abort game(hosts and players) */
 		mainWindow->sendGRPacket(ABORT_GAME_ROOM, 0, NULL);
-		addTextWithColor("<< Aborting game >>\n", *wxRED);
+		addTextWithColor(wxT("<< Aborting game >>\n"), *wxRED);
 		if(this->gameRoom->grID == mainWindow->myUserID) {
-			actionButton->SetLabel("Start");
+			actionButton->SetLabel(wxT("Start"));
 		}
 		else {
-			actionButton->SetLabel("Join");
+			actionButton->SetLabel(wxT("Join"));
 		}
 	}
-	else if(actionMsg == "Join") { /* players only */
-		actionButton->SetLabel("Abort");
+	else if(actionMsg == wxT("Join")) { /* players only */
+		actionButton->SetLabel(wxT("Abort"));
 		mainWindow->sendGRPacket(GAME_LAUNCH_LOADING, 0, NULL);
 		mainWindow->sendGRPacket(GAME_LAUNCH_DONE, 0, NULL);
 #ifdef WIN32
