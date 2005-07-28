@@ -22,21 +22,26 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRSecurity.h"
 #include "memdebug.h"
 
+wxUint32 mulhwu(wxUint32 one, wxUint32 two)
+{
+	wxUint64 a, b, c;
+	a = one;
+	b = two;
+	c = a * b;
+	return c >> 32;
+}
 wxUint32 encryptVerifyCode(wxUint32 code)
 {
-
-	wxUint32 r3, r4, temp;
-	wxUint64 r0;
-	
+	wxUint32 r0, r3, r4, temp;
 	r4 = 0x4dbf4623;
 	r3 = code ^ 0x22356929;
 	r0 = r4;
-	r0 = r0 * r3;
-	r0 = r0 >> 44;
-	r0 = r0 * 0x34af;
+	r0 = mulhwu(r0, r3);
+	r0 >>= 0x0C;
+	r0 *= 0x34af;
 	r0 = r3 - r0;
 	memcpy(&temp, (wxUint8*)&r0, 4);
-	r3 = r3 +  wxUINT32_SWAP_ON_BE(temp);
+	r3 += wxUINT32_SWAP_ON_BE(temp);
 	return r3;
 }
 //--------------------------------------------------------------------------------------
