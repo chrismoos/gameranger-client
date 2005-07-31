@@ -21,9 +21,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "GRChangeMyGames.h"
 #include "GRBaseDefs.h"
+#include "GRApplication.h"
+#include "GRProfileManager.h"
 #include "GRMainWindow.h"
 #include "GRProfile.h"
 #include "GRIcon.h"
+#include "GRUtil.h"
 #include "GRUser.h"
 #include "GRLogWindow.h"
 #include "GRPlugin.h"
@@ -40,15 +43,11 @@ GRChangeMyGames::GRChangeMyGames(const wxFrame *parent,const wxString &title, co
 
 	//Center window
 	CentreOnScreen();
-
-	//null it
-	m_mainWindow = NULL;
-
 }
 //------------------------------------------------------------------------------------
 GRChangeMyGames::~GRChangeMyGames()
 {
-	if(m_mainWindow != NULL) m_mainWindow->searchWindow = NULL;
+
 }
 //-------------------------------------------------------------------------------------
 void GRChangeMyGames::createControls()
@@ -83,34 +82,33 @@ void GRChangeMyGames::OnSaveGameList(wxCommandEvent &event)
 	int x, y;
 	wxUint8 *buf;
 	wxString str;
+	wxUint8 *gamesList;
+	GRPluginManager *pluginManager = GRPluginManager::getInstance();
+	GRProfile *profile = GRApplication::getInstance()->getMainConnection()->getProfile();
+
+	if(profile == NULL) return;
 
 	for(x = 0; x < m_listBox->GetCount(); x++)
 	{
 		if(!m_listBox->IsChecked(x)) continue;
 		str = m_listBox->GetString(x);
-		for(y = 0; y < m_mainWindow->Plugins.size(); y++)
+		for(y = 0; y < pluginManager->getPluginCount(); y++)
 		{
-			if(m_mainWindow->Plugins[y]->gameName == str)
+			if(pluginManager->getPluginAt(y)->gameName == str)
 			{
-				plugins.push_back(m_mainWindow->Plugins[y]);
+				plugins.push_back(pluginManager->getPluginAt(y));
 				break;
 			}
 		}
 	}
 
-	buf = m_mainWindow->makeGameList(plugins);
+	buf = GRUtil::getInstance()->makeGameList(plugins);
 
-	m_mainWindow->logWindow->logData(buf, *(buf)+1);
-	if(m_mainWindow->currentProfile != NULL)
-	{
-		if(m_mainWindow->currentProfile->gamesList != NULL) delete[] m_mainWindow->currentProfile->gamesList;
-		m_mainWindow->currentProfile->gamesList = new wxUint8[*(buf)+1];
-		memcpy(m_mainWindow->currentProfile->gamesList, buf, *(buf)+1);
-		m_mainWindow->currentProfile->Write();
-	}
+	gamesList = new wxUint8[*(buf)+1];
+	memcpy(gamesList, buf, *(buf)+1);
+	profile->setGamesList(gamesList);
 
 	delete[] buf;
-
 	this->Close();
 }
 //---------------------------------------------------------------------------------------
@@ -120,21 +118,22 @@ void GRChangeMyGames::populateListBox()
 	GRPlugin *plugin;
 	wxString str;
 	GRUser *user;
-	if(m_mainWindow == NULL) return;
+	GRPluginManager *pluginManager = GRPluginManager::getInstance();
+	GRProfile *profile = GRApplication::getInstance()->getMainConnection()->getProfile();
 
-	for(x = 0; x < m_mainWindow->Plugins.size(); x++)
+	if(profile == NULL) return;
+
+	for(x = 0; x < pluginManager->getPluginCount(); x++)
 	{
-		plugin = (GRPlugin*)m_mainWindow->Plugins[x];
+		plugin = (GRPlugin*)pluginManager->getPluginAt(x);
 		if(plugin->gameCode == 0xffffffff) continue;
 		if(plugin->gameCode == 0) continue;
 		m_listBox->Append(plugin->gameName);
 	}
 
-	if(m_mainWindow->currentProfile == NULL) return;
-
-	//Check games we have in profile
+	/* Check games we have in profile */
 	user = new GRUser();
-	m_mainWindow->parseGamesListForUser(user, m_mainWindow->currentProfile->gamesList);
+	user->parseGamesList(profile->gamesList);
 	for(x = 0; x < user->gamesList.size(); x++)
 	{
 		for(y = 0; y < m_listBox->GetCount(); y++)

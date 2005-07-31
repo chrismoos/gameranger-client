@@ -35,9 +35,6 @@ public:
 	GRLobby(wxString name, wxUint32 ID, wxUint8 type);
 	~GRLobby();
 
-	//Window
-	GRMainWindow *mainWindow;
-
 	//Lobby Info
 	wxString lobbyName;
 	wxUint8 lobbyType;
@@ -52,23 +49,40 @@ public:
 	GRUser *findUser(wxUint32 userID);
 
 	//Clearing
+	void clearAll();
 	void ClearUsers();
 
 	//Join/leave
+	void addUser(GRUser *User, int type);
+	void removeUserByID(wxUint32 userID, int type, wxString reason);
+	void removeUser(GRUser *user, int type, wxString reason);
+	void joinLobby(); /* try to join it */
+
 	void AddUser(GRUser *User, int type);
 	void userAction(GR_PACKET *Packet);
 	void RemoveUser(GRUser *User, int type, wxString reason);
-	void userLeftServer(GR_PACKET *Packet);
+	
+	/* Manage user count */
+	void decrementUserCount();
+	void incrementUserCount();
+
+	/* icons */
+	void purgeIcons();
+	void userChangedIcon(wxUint32 userID, wxUint32 iconID);
 
 	//Changing nickname
-	void userChangedNick(GR_PACKET *Packet);
+	void userChangedNick(wxUint32 userID, wxString newNick);
+	void userChangedNick(GRUser *user, wxString newNick);
 
 	//Idle/Active
-	void userIsIdle(GR_PACKET *Packet);
-	void userIsActive(GR_PACKET *Packet);
+	void userIsIdle(wxUint32 userID);
+	void userIsIdle(GRUser *user);
+	void userIsActive(wxUint32 userID);
+	void userIsActive(GRUser *user);
 
 	//Chat
-	void chatMessage(GR_PACKET *Packet, int type);
+	void chatMessage(wxUint32 userID, wxString message, int type);
+	void chatMessage(GRUser *user, wxString Message, int type);
 
 	//Lobby Count
 	void updateComboString();

@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef GRPFOFILE_H
+#ifndef GRPROFILE_H
 #define GRPROFILE_H
 
 #include "GRBaseDefs.h"
@@ -43,6 +43,10 @@ public:
 	wxUint8 macAddress[6];
 	wxUint8 *gamesList;
 	wxString password;
+	bool savePass;
+
+	/* Set games list */
+	void setGamesList(wxUint8 *list);
 
 	wxUint32 comboIndex;
 

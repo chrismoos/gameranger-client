@@ -32,6 +32,7 @@ GRProfile::GRProfile()
 	makeMac();
 	gamesList = new wxUint8[1];
 	gamesList[0] = 0;
+	savePass = false;
 }
 //------------------------------------------------------------------
 GRProfile::~GRProfile()
@@ -41,9 +42,11 @@ GRProfile::~GRProfile()
 //------------------------------------------------------------------------
 void GRProfile::Write()
 {
+	if(grID == 0) return;
 	wxFile file;
 	wxUint32 size;
 	wxUint8 *buf, *ptr;
+	char nulls[1] = {0};
 
 	size = sizeof(wxUint32) + 6;
 	size += nickname.Len() + 1;
@@ -83,10 +86,16 @@ void GRProfile::Write()
 	ptr += *(gamesList)+1;
 
 	//password
-	strcpy((char*)ptr, (const char*)password.mb_str());
-	ptr += password.Len() + 1;
+	if(savePass) {
+		strcpy((char*)ptr, (const char*)password.mb_str());
+		ptr += password.Len() + 1;
+	}
+	else {
+		memcpy((char*)ptr, nulls, 1);
+		ptr += 1;
+	}
 
-	file.Open(wxT("profiles/")+nickname+wxT(".bin"), wxFile::write);
+	file.Open(wxT("profiles/")+wxString::Format(wxT("%d"), grID)+wxT(".bin"), wxFile::write);
 
 	file.Write(buf, size);
 	file.Close();
@@ -148,6 +157,7 @@ void GRProfile::Read(wxString filename)
 	{
 		password = bufToStr(ptr);
 	}
+	if(password.Length() > 0) savePass = true;
 	
 
 	file.Close();
@@ -179,5 +189,12 @@ void GRProfile::makeMac()
 	memcpy(macAddress, temp, 6);
 }
 //----------------------------------------------------------------------
+void GRProfile::setGamesList(wxUint8 *list)
+{
+	if(list == NULL) return;
 
+	if(gamesList == NULL) delete[] gamesList;
+	gamesList = list;
+}
+//----------------------------------------------------------------------
 

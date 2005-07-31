@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #define GRMAINWINDOW_H
 
 #include "GRBaseDefs.h"
+#include "GRLogger.h"
+#include "GRPluginManager.h"
 
 class GRLoginWindow;
 class GRLogWindow;
@@ -48,21 +50,31 @@ int wxCALLBACK wxListCompareFunction(long item1, long item2, long sortData);
 
 class GRMainWindow : public wxFrame
 {
+private:
+	GRLogger *logger;
+
+	/* Plugin Manager */
+	GRPluginManager *pluginManager;
 public:
-	GRMainWindow(const wxString &title, const wxPoint &pos, const wxSize &size);
+	/* Destructor */
 	~GRMainWindow();
 
-	//Controls
+	/* Constructor */
+	GRMainWindow(const wxString &title, const wxPoint &pos, const wxSize &size);
+
+	/* Window Specific Stuff */
+	void setupWindow();
+	void createControls();
+
+	/* Controls */
 	wxMenuBar *menuBar;
 	wxMenu *accountsMenu;
 	wxMenu *fileMenu;
 	wxMenu *aboutMenu;
 	wxMenu *hostMenu;
 	wxMenu *optionsMenu;
-	wxComboBox *lobbyComboBox;
 	wxTextCtrl *chatTextCtrl;
 	wxTextCtrl *chatEditField;
-	wxListCtrl *userListBox;
 	wxListView *gameRoomList;
 	wxNotebookPage *gameRoomPage;
 	wxImageList *imgList;
@@ -72,10 +84,56 @@ public:
 	wxMenu *usersMenu;
 	wxMenu *gameListMenu;
 
+	/* Lobby Combo Box */
+	wxComboBox *lobbyComboBox;
+	void clearLobbyComboBox();
+	void addLobbyToComboBox(GRLobby *lobby);
+	void setCurrentLobbyInComboBox(GRLobby *lobby);
+	void updateLobbyInComboBox(GRLobby *lobby);
+	int getLobbyComboIndex(GRLobby *lobby);
+
+	/* User List Box/Other user stuff */
+	wxListCtrl *userListBox;
+	void clearUserListBox();
+	void displayUserJoinedRoom(GRUser *user);
+	void displayUserJoinedGR(GRUser *user);
+	void displayUserLeftRoom(GRUser *user);
+	void displayUserLeftGR(GRUser *user, wxString reason);
+	void displayUserLeftGR(GRUser *user);
+	void addUserToListBox(GRUser *user);
+	void removeUserFromListBox(GRUser *user);
+	void updateUserInListBox(GRUser *user);
+	int getUserListBoxIndex(GRUser *user);
+	void updateUserIcon(GRUser *user);
+
+	/* Game Room List */
+	void clearGameRooms();
+	void displayGameRoomOpened(GRGameRoom *gameRoom);
+	void displayGameRoomClosed(GRGameRoom *gameRoom);
+	void addGameRoomToListView(GRGameRoom *gameRoom);
+	void removeGameFromListView(GRGameRoom *gameRoom);
+	void updateGameRoomInListView(GRGameRoom *gameRoom);
+	wxInt32 getGameItemIndex(GRGameRoom *room);
+
+	/* Enable/Disable Menus */
+	void enableMenus();
+	void disableMenus();
+
+	/* Image List */
+	void setupImageLists();
+	void setupIconImageList();
+	void setupPluginImageList();
+
+	/* Plugin Load Event */
+	void OnPluginLoadDone(wxCommandEvent &evt);
+
+	/* Icon Cache Event */
+	void OnLoadCacheDone(wxCommandEvent &evt);
+
 	//Cleanup
 	void cleanupGR();
 
-	void createControls();
+	
 
 	//Windows
 	GRLoginWindow *loginWindow;
@@ -84,6 +142,7 @@ public:
 	GRRegWindow *regWindow;
 
 	//Events
+	void OnWindowClose(wxCloseEvent &event);
 	void MenuExit(wxCommandEvent &event);
 	void OnHostRoomMenu(wxCommandEvent &event);
 	void MenuLogout(wxCommandEvent &event);
@@ -109,9 +168,6 @@ public:
 	//User List Box Helpers
 	wxInt32 getUserItemIndex(GRUser *user);
 
-	//Game Room list helpers
-	wxInt32 getGameItemIndex(GRGameRoom *room);
-
 	//Chat Text Box Help
 	void addTextWithColor(wxString str, wxColour color);
 
@@ -133,25 +189,12 @@ public:
 	void handlePacket(GR_PACKET *Packet);
 
 	//Auth Functions
-	void clientVerify(GR_PACKET *Packet);
 	void checkEmail(GR_PACKET *Packet);
 	void checkEmailAck(GR_PACKET *Packet);
 	wxUint32 m_verifyCode;
 
 	//Login
-	void loginToGR(GR_PACKET *Packet);
 	void Login(char *email, char *password);
-	void invalidPassword();
-	void myUserInfo(GR_PACKET *Packet);
-
-	//Server Message
-	void serverMessage(GR_PACKET *Packet);
-
-	//Ban 
-	void banTimeLeft(GR_PACKET *Packet);
-
-	//Invalid account
-	void invalidAccount();
 
 	//My Info
 	wxUint32 myUserID;
@@ -160,14 +203,9 @@ public:
 	//Helper Functions
 	wxString bufToStr(wxUint8 *text);
 
-	//Find Player
-	GRFindPlayerWindow *searchWindow;
-	void findUserResults(GR_PACKET *Packet);
-
 	//Lobby Functions/Variables
 	vector <GRLobby*> Lobbies;
 	GRLobby *currentLobby;
-	void publicLobbyList(GR_PACKET *Packet);
 	void lobbyUserList(GR_PACKET *Packet);
 	GRLobby *findLobby(wxUint32 lobbyID);
 	void setListInfo(GRUser *User);
@@ -175,10 +213,7 @@ public:
 
 	//Game Rooms
 	vector <GRGameRoom*> GameRooms;
-	void gameRoomsList(GR_PACKET *Packet);
 	void addGameRoom(wxUint32 gameRoomID, wxUint32 gameCode, wxUint32 maxPlayers, wxUint32 currentPlayers, wxString ip, wxUint8 locked, wxString description, wxUint32 grID, wxUint32 iconID, wxUint32 status, wxString host, bool announce);
-	void gameRoomOpened(GR_PACKET *Packet);
-	void gameRoomClosed(GR_PACKET *Packet);
 	void playerJoinedGameRoom(GR_PACKET *Packet);
 	GRGameRoom *findGameRoom(wxUint32 id);
 	void updateGameRoomPlayerCountString(GRGameRoom *room);
@@ -190,8 +225,6 @@ public:
 	bool gameRoomWillClose;
 
 	//Plugins
-	void loadPlugins();
-	GRPlugin *findPluginByCode(wxUint32 gameCode);
 	vector <GRPlugin*> Plugins;
 	void parseGamesListForUser(GRUser *user, wxUint8 *buf);
 	wxUint8 *makePluginsList();
@@ -203,19 +236,7 @@ public:
 	void saveBanner(wxUint8 *data, wxUint32 length, wxUint32 bannerID);
 	void appBanner(GR_PACKET *Packet);
 
-	//Mac OS Color Profile
-	void loadColorProfile();
-	wxUint8 *colorTable;
-
-	//Test stuff
-	void testPacket(wxString filename);
-
 	//Icon Cache
-	void requestMissingIconsFromUserList(wxUint32 count);
-	void requestIcon(wxUint32 iconID);
-	void purgeIcons();
-	void userChangedIcon(GR_PACKET *Packet);
-	void receivedIconData(GR_PACKET *Packet);
 	GRIconCache *iconCache;
 
 	//Private Messages
@@ -229,11 +250,7 @@ public:
 	int currentRoomID;
 
 	//User Info
-	void regularUserInfo(GR_PACKET *Packet);
-	void premiumUserInfo(GR_PACKET *Packet);
-	void requestPicture(wxUint32 pictureID);
 	GRPremiumUserInfoWindow *currentPremiumInfoWindow;
-	void recvPremiumUserImage(GR_PACKET *Packet);
 	bool roomWantedInfo;
 
 	//Log Packets
@@ -266,6 +283,7 @@ public:
 	GRProfile *currentProfile;
 
 	DECLARE_EVENT_TABLE()
+
 };
 
 enum {
@@ -290,7 +308,8 @@ enum {
 	GAMES_LIST_MENU,
 	CHANGE_MY_GAMES_ITEM,
 	HOST_MENU_ITEM,
-	TIMESTAMP_TOGGLE
+	TIMESTAMP_TOGGLE,
+	GRMAINWINDOW_ID
 };
 
 #endif

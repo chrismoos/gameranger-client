@@ -43,9 +43,6 @@ public:
 	//create controls
 	void createControls();
 
-	//main window
-	GRMainWindow *m_mainWindow;
-
 	//Events
 	void OnSaveGameList(wxCommandEvent &event);
 	void OnCheckAll(wxCommandEvent &event);

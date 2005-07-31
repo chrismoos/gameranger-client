@@ -27,22 +27,51 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 class GRIcon;
 using namespace std;
 
+DECLARE_EVENT_TYPE(GRLOADCACHEEVENT, -1)
+
 class GRIconCache
 {
 public:
-	GRIconCache();
 	~GRIconCache();
+
+	/* Get Instance */
+	static GRIconCache *getInstance();
+
 
 	vector<GRIcon*> Icons;
 	wxUint8 *colorTable;
 	wxImageList *imgList;
 
+	/* Find Icon */
 	GRIcon *findIcon(wxUint32 iconID);
+
+	/* Add Icon */
 	void AddIcon(GRIcon *icon);
+
+	/* Start load cache thread */
+	void startLoadCache();
 
 	//Load/Save
 	void LoadCache(wxString filename);
 	void SaveCache(wxString filename);
+
+protected:
+	GRIconCache();
+
+private:
+	static GRIconCache *_instance;
+};
+
+class GRIconCacheLoadThread : public wxThread {
+public:
+	GRIconCacheLoadThread();
+
+	void *Entry();
+};
+
+
+enum {
+	LOADCACHEDONEID = wxID_HIGHEST + 400
 };
 
 #endif

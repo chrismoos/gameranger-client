@@ -25,22 +25,24 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRBaseDefs.h"
 #include "GRLoginWindow.h"
 #include "GRRegWindow.h"
+#include "GRIconCache.h"
 #include "GRPrivateMessage.h"
 #include "GRGameRoomWindow.h"
 #include "GRChangeIconWindow.h"
 #include "GRFindPlayerWindow.h"
+#include "GRConnection.h"
 #include "GRChangeMyGames.h"
 #include "GRHostWindow.h"
 
 class GRMainWindow;
+class GRApplication;
 
 class MainApp : public wxApp
 {
 
 	public:
 		virtual bool OnInit();
-
-		bool FirstRun();
+		int OnExit();
 
 		//Login Window
 		GRLoginWindow *m_loginWindow;
@@ -48,8 +50,8 @@ class MainApp : public wxApp
 		//Registration Window
 		GRRegWindow *m_regWindow;
 
-		//Main Window
-		GRMainWindow *m_mainWindow;
+	private:
+		GRApplication *app;
 };
 
 BEGIN_EVENT_TABLE(GRRegWindow, wxFrame)
@@ -85,11 +87,18 @@ BEGIN_EVENT_TABLE(GRMainWindow, wxFrame)
 	EVT_LIST_ITEM_ACTIVATED(USERLISTBOX_ID, GRMainWindow::OnUserDoubleClick)
 	EVT_LIST_ITEM_RIGHT_CLICK(USERLISTBOX_ID, GRMainWindow::OnUserRightClick)
 	EVT_LIST_ITEM_ACTIVATED(GAMELIST_ID, GRMainWindow::OnGameRoomDoubleClick)
+	EVT_CLOSE(GRMainWindow::OnWindowClose)
+	EVT_COMMAND(GRPLUGINLOADDONEID, GRPLUGINLOADEVENT, GRMainWindow::OnPluginLoadDone)
+	EVT_COMMAND(LOADCACHEDONEID, GRLOADCACHEEVENT, GRMainWindow::OnLoadCacheDone)
 END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE(GRChangeIconWindow, wxFrame)
 	EVT_BUTTON(LOAD_BUTTON_ID, GRChangeIconWindow::OnLoadIcon)
 	EVT_BUTTON(CHANGE_ICON_BUTTON_ID, GRChangeIconWindow::OnChangeIcon)
+END_EVENT_TABLE()
+
+BEGIN_EVENT_TABLE(GRLogWindow, wxFrame)
+	EVT_CLOSE(GRLogWindow::OnWindowClose)
 END_EVENT_TABLE()
 
 BEGIN_EVENT_TABLE(GRChangeMyGames, wxFrame)
@@ -118,6 +127,11 @@ END_EVENT_TABLE()
 BEGIN_EVENT_TABLE(GRHostWindow, wxFrame)
 	EVT_BUTTON(HOST_BUTTON_ID, GRHostWindow::OnHostButton)
 	EVT_COMBOBOX(HOST_GAME_COMBO_LIST, GRHostWindow::OnGameComboBoxSelect)
+END_EVENT_TABLE()
+
+BEGIN_EVENT_TABLE(GRConnection, wxEvtHandler)
+	EVT_SOCKET(GRSOCKETID, GRConnection::OnSocketEvent)
+	EVT_TIMER(GRTIMER_ID, GRConnection::OnTimer)
 END_EVENT_TABLE()
 
 #endif

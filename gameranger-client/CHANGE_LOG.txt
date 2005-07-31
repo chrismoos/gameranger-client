@@ -3,6 +3,8 @@ Gameranger Client
 Change Log
 ---------------------------------------------
 
+7/31/05 -
+Complete redesign of application structure. Currently game room joining/leaving does not work. Almost done with restructuring.
 7/26/05 - 
 Fixed problem with late joiners.
 Fixed problem with hosting a game and Start button not functioning properly.

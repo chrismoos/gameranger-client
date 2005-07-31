@@ -137,29 +137,7 @@ void GRGameRoomWindow::createControls()
 //------------------------------------------------------------------------------------
 void GRGameRoomWindow::AddUser(GRUser *user, bool notify)
 {
-	GRIcon *icon;
-	wxInt32 imageIndex, index;
 
-	users.push_back(user);
-
-	icon = mainWindow->iconCache->findIcon(user->iconID);
-	user->icon = icon;
-	if(icon == NULL) 
-	{
-		imageIndex = 0;
-		if(user->iconID != 0) mainWindow->requestIcon(user->iconID);
-	}
-	else imageIndex = icon->imageIndex;
-
-	//add to list box
-	index = userListBox->InsertItem(userListBox->GetItemCount(), user->nick, imageIndex);
-	if(index != -1) userListBox->SetItemData(index, (long)user);
-	setListInfo(user);
-
-	if(notify == true) 
-	{
-		addTextWithColor(wxT("<< ") + user->nick + wxT(" has joined the room >>\n"), *wxRED);
-	}
 }
 //----------------------------------------------------------------------------------
 void GRGameRoomWindow::addTextWithColor(wxString str, wxColour color)

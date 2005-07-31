@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRConnectStatusWindow.h"
 #include "memdebug.h"
 
+/* status instance */
+GRConnectStatusWindow *GRConnectStatusWindow::_instance = NULL;
+
 GRConnectStatusWindow::GRConnectStatusWindow(const wxFrame *parent, const wxString &title, const wxPoint &pos, const wxSize &size)
 		: wxFrame((wxFrame*)parent, -1, title, pos, size, wxCAPTION)
 {
@@ -42,9 +45,25 @@ GRConnectStatusWindow::GRConnectStatusWindow(const wxFrame *parent, const wxStri
 
 	CentreOnScreen();
 }
-//---------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------*/
 GRConnectStatusWindow::~GRConnectStatusWindow()
 {
 	
 }
-//------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------*/
+GRConnectStatusWindow *GRConnectStatusWindow::getInstance()
+{
+	if(_instance == NULL) {
+		_instance = new GRConnectStatusWindow(NULL, wxT("Connecting to server..."), wxDefaultPosition, wxDefaultSize);
+	}
+	return _instance;
+}
+/*------------------------------------------------------------------------------------------*/
+GRConnectStatusWindow *GRConnectStatusWindow::getInstance(wxFrame *parent)
+{
+	if(_instance == NULL) {
+		_instance = new GRConnectStatusWindow(parent, wxT("Connecting to server..."), wxDefaultPosition, wxDefaultSize);
+	}
+	return _instance;
+}
+/*------------------------------------------------------------------------------------------*/

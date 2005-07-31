@@ -21,19 +21,22 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "GRLobby.h"
 #include "GRUser.h"
+#include "GRApplication.h"
+#include "GRLobbyManager.h"
+#include "GRLogger.h"
 #include "GRMainWindow.h"
 #include "GRLogWindow.h"
 #include "GRIcon.h"
 #include "GRIconCache.h"
 #include "GRGameRoom.h"
 #include "memdebug.h"
+#include "GRProfile.h"
 
 GRLobby::GRLobby(wxString name, wxUint32 ID, wxUint8 type)
 {
 	lobbyName = name;
 	lobbyID = ID;
 	lobbyType = type;
-	Users.reserve(400);
 	userCount = 0;
 }
 //-------------------------------------------------------------------
@@ -52,155 +55,151 @@ void GRLobby::SetUserCount(wxUint32 count)
 	userCount = count;
 }
 //--------------------------------------------------------------------
+void GRLobby::addUser(GRUser *User, int type)
+{
+	switch(type) 
+	{
+		case 1:
+			GRApplication::getInstance()->getMainConnection()->requestIcon(User->iconID);
+			GRApplication::getInstance()->getMainWindow()->displayUserJoinedRoom(User);
+		break;
+
+		case 2:
+			GRApplication::getInstance()->getMainConnection()->requestIcon(User->iconID);
+			GRApplication::getInstance()->getMainWindow()->displayUserJoinedGR(User);
+		break;
+	}
+
+	/* Add user to our user list */
+	Users.push_back(User);
+	userCount++;
+
+	/* Update lobby combo box string */
+	GRApplication::getInstance()->getMainWindow()->updateLobbyInComboBox(this);
+
+	/* Add user to list box */
+	GRApplication::getInstance()->getMainWindow()->addUserToListBox(User);
+}
+/*----------------------------------------------------------------------*/
+void GRLobby::decrementUserCount()
+{
+	userCount--;
+
+	/* Update lobby combo box string */
+	GRApplication::getInstance()->getMainWindow()->updateLobbyInComboBox(this);
+}
+/*----------------------------------------------------------------------*/
+void GRLobby::incrementUserCount()
+{
+	userCount++;
+
+	/* Update lobby combo box string */
+	GRApplication::getInstance()->getMainWindow()->updateLobbyInComboBox(this);
+}
+/*----------------------------------------------------------------------*/
+void GRLobby::joinLobby()
+{
+	wxUint32 id;
+
+	/* if it's our current lobby, return */
+	if(GRApplication::getInstance()->getMainConnection()->getLobbyManager()->getCurrentLobby() == this) return;
+
+	id = this->lobbyID;
+	id = htonl(id);
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(JOIN_PUBLIC_LOBBY, sizeof(wxUint32), (wxUint8*)&id);
+}
+/*----------------------------------------------------------------------*/
+void GRLobby::removeUserByID(wxUint32 userID, int type, wxString reason)
+{
+	GRUser *user = findUser(userID);
+	if(user == NULL) return;
+	removeUser(user, type, reason);
+}
+/*-------------------------------------------------------------------------*/
+void GRLobby::removeUser(GRUser *user, int type, wxString reason)
+{
+	vector<GRUser*>::iterator it;
+
+	switch(type)
+	{
+		case 1:
+			GRApplication::getInstance()->getMainWindow()->displayUserLeftRoom(user);
+		break;
+
+		case 2:
+			GRApplication::getInstance()->getMainWindow()->displayUserLeftGR(user);
+		break;
+
+		case 3:
+			GRApplication::getInstance()->getMainWindow()->displayUserLeftGR(user, reason);
+		break;
+	}
+
+	/* Remove user from list */
+	for(unsigned int x = 0; x < Users.size(); x++) {
+		if(Users[x]->userID == user->userID) {
+			it = Users.begin()+x;
+			Users.erase(it);
+			break;
+		}
+	}
+
+	/* Remove user from list box */
+	GRApplication::getInstance()->getMainWindow()->removeUserFromListBox(user);
+
+	/* Update combo box */
+	userCount--;
+	GRApplication::getInstance()->getMainWindow()->updateLobbyInComboBox(this);
+
+	/* Delete user */
+	delete(user);
+}
+/*-------------------------------------------------------------------------*/
+void GRLobby::purgeIcons()
+{
+	wxUint32 x;
+	wxInt32 index;
+	GRUser *user;
+	GRIconCache *iconCache = GRIconCache::getInstance();
+	GRMainWindow *mainWindow = GRApplication::getInstance()->getMainWindow();
+
+	/* update in lobby */
+	for(x = 0; x < Users.size(); x++)
+	{
+		user = Users[x];
+		if(user == NULL) continue;
+		if(user->icon == NULL && user->iconID != 0) {
+			user->icon = iconCache->findIcon(user->iconID);
+			if(user->icon != NULL) {
+				mainWindow->updateUserIcon(user);
+			}
+		}
+	}
+}
+/*-------------------------------------------------------------------------*/
 void GRLobby::AddUser(GRUser *User, int type)
 {
-	Users.push_back(User);
-	if(type == 1) 
-	{
-		userCount++;
-		mainWindow->addTextWithColor(wxT("<< ") + User->nick + wxT(" has joined the room >>\n"), *wxRED);
-		updateComboString();
-	}
-	else if(type == 2) 
-	{
-		userCount++;
-		mainWindow->addTextWithColor(wxT("<< ") + User->nick + wxT(" has joined GameRanger >>\n"), *wxRED);
-		updateComboString();
-	}
-	else 
-	{
-		userCount++;
-		updateComboString();
-	}
+
 }
-//----------------------------------------------------------------------
+/*-------------------------------------------------------------------------*/
 void GRLobby::updateComboString()
 {
-	wxString comboString;
-	comboString = lobbyName + wxT("  -  ") + wxString::Format(wxT("%d"), userCount);
-
-	#ifndef __WXGTK__ //wxGTK doesen't have this implemented yet, as of 2.4.2
-	mainWindow->lobbyComboBox->SetString(comboIndex, comboString);
-	#endif
-
-	mainWindow->lobbyComboBox->SetSelection(mainWindow->currentLobby->comboIndex);
+	GRApplication::getInstance()->getMainWindow()->setCurrentLobbyInComboBox(this);
 }
-//-------------------------------------------------------------------------
+/*-------------------------------------------------------------------------*/
+void GRLobby::clearAll()
+{
+	wxUint32 x;
+	for(x = 0; x < Users.size(); x++)
+	{
+		delete(Users[x]);
+	}
+	Users.clear();
+	userCount = 0;
+}
+/*-------------------------------------------------------------------------*/
 void GRLobby::userAction(GR_PACKET *Packet)
 {
-	wxUint8 *buf;
-	GRUser *user;
-	wxUint32 prevRoom, newRoom, userID, iconID;
-	wxUint8 status;
-	GRIcon *icon;
-	wxString nick;
-	wxInt32 imageIndex;
-	wxInt32 index;
-	GRLobby *lobby;
-
-	buf = Packet->payload;
-
-	//Previous lobby
-	memcpy(&prevRoom, buf, sizeof(wxUint32));
-	prevRoom = ntohl(prevRoom);
-	buf += sizeof(wxUint32);
-
-	//new lobby
-	memcpy(&newRoom, buf, sizeof(wxUint32));
-	newRoom = ntohl(newRoom);
-	buf += sizeof(wxUint32);
-
-	//User ID
-	memcpy(&userID, buf, sizeof(wxUint32));
-	userID = ntohl(userID);
-	buf += sizeof(wxUint32);
-
-	if(newRoom == lobbyID) //joined this room 
-	{ 
-			//icon id
-			memcpy(&iconID, buf, sizeof(wxUint32));
-			iconID = ntohl(iconID);
-			buf += sizeof(wxUint32);
-
-			//status
-			status = *buf;
-			buf++;
-
-			//nickname
-			nick = mainWindow->bufToStr(buf);
-			buf += nick.Len() + 1;
-
-			user = new GRUser(nick, userID, iconID);
-
-			//games list
-			mainWindow->parseGamesListForUser(user, buf);
-			buf += *(buf)+1;
-
-			
-			user->SetStatus(status);
-
-			if(prevRoom == 0) 
-			{
-				AddUser(user, 2);
-			}
-			else 
-			{
-				//update user count
-				lobby = mainWindow->findLobby(prevRoom);
-				if(lobby == NULL) return;
-				lobby->userCount--;
-				lobby->updateComboString();
-				AddUser(user, 1);
-			}
-
-			icon = mainWindow->iconCache->findIcon(iconID);
-			user->icon = icon;
-			if(icon == NULL) 
-			{
-				imageIndex = 0;
-				if(iconID != 0) mainWindow->requestIcon(iconID);
-			}
-			else imageIndex = icon->imageIndex;
-
-			//add to list box
-			index = mainWindow->userListBox->InsertItem(mainWindow->userListBox->GetItemCount(), nick, imageIndex);
-			if(index != -1) mainWindow->userListBox->SetItemData(index, (long)user);
-
-			return;
-	}
-	else if(prevRoom == lobbyID) //left room
-	{
-		if(newRoom == 0) //left gameranger
-		{
-			RemoveUser(findUser(userID), 2, wxT(""));
-		}
-		else //went to antoher room
-		{
-			RemoveUser(findUser(userID), 1, wxT(""));
-			lobby = mainWindow->findLobby(newRoom);
-			if(lobby == NULL) return;
-			lobby->userCount++;
-			lobby->updateComboString();
-		}
-	}
-	else //update lobby user counts
-	{
-		if(prevRoom != 0) 
-		{
-			lobby = mainWindow->findLobby(prevRoom);
-			if(lobby == NULL) return;
-			lobby->userCount--;
-			lobby->updateComboString();
-		}
-
-		if(newRoom != 0)
-		{
-			lobby = mainWindow->findLobby(newRoom);
-			if(lobby == NULL) return;
-			lobby->userCount++;
-			lobby->updateComboString();
-		}
-	}
 
 }
 //---------------------------------------------------------------------------
@@ -216,101 +215,30 @@ GRUser *GRLobby::findUser(wxUint32 userID)
 //------------------------------------------------------------------------
 void GRLobby::RemoveUser(GRUser *User, int type, wxString reason)
 {
-	vector<GRUser*>::iterator it;
-	wxUint32 x;
-	wxInt32 index;
-	if(User == NULL) return;
 
-	for(x = 0; x < Users.size(); x++)
-	{
-		if(Users[x]->userID == User->userID)
-		{
-			it = Users.begin()+x;
-			Users.erase(it);
-			break;
-		}
-	}
-	if(type == 1) 
-	{
-		userCount--;
-		mainWindow->chatTextCtrl->AppendText(wxT("<< ") + User->nick + wxT(" has left the room >>\n"));
-		updateComboString();
-	}
-	else if(type == 2) 
-	{
-		userCount--;
-		mainWindow->chatTextCtrl->AppendText(wxT("<< ") + User->nick + wxT(" has left GameRanger >>\n"));
-		updateComboString();
-	}
 
-	else if(type == 3)
-	{
-		userCount--;
-		mainWindow->chatTextCtrl->AppendText(wxT("<< ") + User->nick + wxT(" was disconnected(") + reason + wxT(") >>\n"));
-	}
-	index = mainWindow->getUserItemIndex(User);
-	if(index == -1) 
-	{
-		delete(User);
-		return;
-	}
-	mainWindow->userListBox->DeleteItem(index);
-	delete(User);
-
-}
-//------------------------------------------------------------------------
-void GRLobby::userLeftServer(GR_PACKET *Packet)
-{
-	wxUint8 *buf;
-	wxUint32 userID;
-	wxString reason;
-
-	buf = Packet->payload;
-
-	//user id
-	memcpy(&userID, buf, sizeof(wxUint32));
-	userID = ntohl(userID);
-	buf += sizeof(wxUint32);
-
-	//reason
-	reason = mainWindow->bufToStr(buf);
-
-	if(reason.Len() > 0) RemoveUser(findUser(userID), 3, reason);
-	else RemoveUser(findUser(userID), 2, wxT(""));
 }
 //-----------------------------------------------------------------------
-void GRLobby::chatMessage(GR_PACKET *Packet, int type)
+void GRLobby::chatMessage(wxUint32 userID, wxString message, int type)
 {
-	wxUint8 *buf;
-	GRUser *user;
-	wxUint32 userID;
-	wxString message;
-
-	buf = Packet->payload;
-
-	//user id
-	memcpy(&userID, buf, sizeof(wxUint32));
-	userID = ntohl(userID);
-	buf += sizeof(wxUint32);
-
-	//message
-	message = mainWindow->bufToStr(buf);
-
-	user = findUser(userID);
-
+	GRUser *user = findUser(userID);
+	if(user != NULL) chatMessage(user, message, type);
+}
+//----------------------------------------------------------------------
+void GRLobby::chatMessage(GRUser *user, wxString Message, int type)
+{
+	GRMainWindow *mainWindow = GRApplication::getInstance()->getMainWindow();
 	if(type == 0) 
 	{
 		mainWindow->addTextWithColor(user->nick, *wxBLUE);
-		mainWindow->addTextWithColor(wxT(": ") + message + wxT("\n"), *wxBLACK);
+		mainWindow->addTextWithColor(wxT(": ") + Message + wxT("\n"), *wxBLACK);
 	}
 	else if(type == 1) 
 	{
 		mainWindow->addTextWithColor(wxT("*** "),*wxBLACK);
 		mainWindow->addTextWithColor(user->nick, *wxBLUE);
-		mainWindow->addTextWithColor(wxT(" ") + message + wxT("\n"), *wxBLACK);
+		mainWindow->addTextWithColor(wxT(" ") + Message + wxT("\n"), *wxBLACK);
 	}
-
-	
 }
 //----------------------------------------------------------------------
 void GRLobby::ClearUsers()
@@ -324,103 +252,80 @@ void GRLobby::ClearUsers()
 	userCount = 0;
 }
 //-----------------------------------------------------------------------
-void GRLobby::userChangedNick(GR_PACKET *Packet)
+void GRLobby::userChangedNick(wxUint32 userID, wxString newNick)
 {
-	wxUint32 userID;
-	wxString newNick;
-	wxInt32 index;
-	wxUint8 *ptr;
-	GRUser *user;
+	GRUser *user = findUser(userID);
+	if(user != NULL) userChangedNick(user, newNick);
+}
+/*-----------------------------------------------------------------------*/
+void GRLobby::userChangedNick(GRUser *user, wxString newNick)
+{
+	GRMainWindow *mainWindow = GRApplication::getInstance()->getMainWindow();
+	GRProfile *profile = GRApplication::getInstance()->getMainConnection()->getProfile();
 
-	ptr = Packet->payload;
+	/* notify in main chat */
+	mainWindow->addTextWithColor(wxT("<< ")+user->nick+wxT(" is now known as ")+newNick+wxT(">>\n"), *wxRED);
 
-	memcpy(&userID, ptr, sizeof(wxUint32));
-	userID = ntohl(userID);
-	ptr += sizeof(wxUint32);
-
-	user = findUser(userID);
-	if(user == NULL) return;
-
-	newNick = mainWindow->bufToStr(ptr);
-
-	mainWindow->chatTextCtrl->AppendText(wxT("<< ")+user->nick+wxT(" is now known as ")+newNick+wxT(">>\n"));
+	/* update user */
 	user->nick = newNick;
-	index = mainWindow->getUserItemIndex(user);
-	if(index == -1) return;
-	mainWindow->userListBox->SetItemText(index, newNick);
-}
-//---------------------------------------------------------------------
-void GRLobby::userIsIdle(GR_PACKET *Packet)
-{
-	wxUint32 userID;
-	wxUint8 *ptr;
-	GRUser *user;
-	GRGameRoom *gameRoom;
 
-	ptr = Packet->payload;
+	/* update user list box */
+	mainWindow->updateUserInListBox(user);
 
-	memcpy(&userID, ptr, sizeof(wxUint32));
-	userID = ntohl(userID);
-	
-	user = findUser(userID);
-	if(user == NULL) return;
-
-	//Incrementing makes them idle
-	user->status += 1;
-
-	//update in listbox
-	mainWindow->setListInfo(user);
-
-	/* if user is hosting a game, update game idle/not idle */
-	for(int x = 0; x < mainWindow->GameRooms.size(); x++) {
-		gameRoom = (GRGameRoom*)mainWindow->GameRooms[x];
-
-		/* the user is hosting */
-		if(gameRoom->grID == userID) {
-			gameRoom->status += 1;
-			mainWindow->setGameRoomListInfo(gameRoom);
-			break;
-		}
+	/* if it's our user, update profile too */
+	if(user->userID == profile->grID) {
+		profile->nickname = newNick;
 	}
-
-	//notify in main window
-	//mainWindow->chatTextCtrl->AppendText(wxT("<< ")+user->nick+wxT(" is idle >>\n"));
 }
-//------------------------------------------------------------------------
-void GRLobby::userIsActive(GR_PACKET *Packet)
+/*-----------------------------------------------------------------------*/
+void GRLobby::userIsIdle(GRUser *user)
 {
-	wxUint32 userID;
-	wxUint8 *ptr;
-	GRUser *user;
-	GRGameRoom *gameRoom;
+	/* Incrementing makes them idle */
+	user->setIdle();
 
-	ptr = Packet->payload;
+	/* update in listbox */
+	GRApplication::getInstance()->getMainWindow()->setListInfo(user);
 
-	memcpy(&userID, ptr, sizeof(wxUint32));
-	userID = ntohl(userID);
-	
-	user = findUser(userID);
-	if(user == NULL) return;
-
-	//Decrementing makes them active
-	user->status -= 1;
-
-	//update in listbox
-	mainWindow->setListInfo(user);
-
-	/* if user is hosting a game, update game idle/not idle */
-	for(int x = 0; x < mainWindow->GameRooms.size(); x++) {
-		gameRoom = (GRGameRoom*)mainWindow->GameRooms[x];
-
-		/* the user is hosting */
-		if(gameRoom->grID == userID) {
-			gameRoom->status -= 1;
-			mainWindow->setGameRoomListInfo(gameRoom);
-			break;
-		}
-	}
-
-	//notify in main window
-	//mainWindow->chatTextCtrl->AppendText(wxT("<< ")+user->nick+wxT(" is now active >>\n"));
+	/* notify in main window */
+	GRApplication::getInstance()->getMainWindow()->addTextWithColor(wxT("<< ")+user->nick+wxT(" is idle >>\n"), *wxRED);
 }
-//------------------------------------------------------------------------
+/*-----------------------------------------------------------------------*/
+void GRLobby::userIsIdle(wxUint32 userID)
+{
+	GRUser *user = findUser(userID);
+	if(user != NULL) userIsIdle(user);
+}
+/*-----------------------------------------------------------------------*/
+void GRLobby::userIsActive(GRUser *user)
+{
+	/* Incrementing makes them idle */
+	user->setActive();
+
+	/* update in listbox */
+	GRApplication::getInstance()->getMainWindow()->setListInfo(user);
+
+	/* notify in main window */
+	GRApplication::getInstance()->getMainWindow()->addTextWithColor(wxT("<< ")+user->nick+wxT(" is active >>\n"), *wxRED);
+}
+/*-----------------------------------------------------------------------*/
+void GRLobby::userIsActive(wxUint32 userID)
+{
+	GRUser *user = findUser(userID);
+	if(user != NULL) userIsActive(user);
+}
+/*-----------------------------------------------------------------------*/
+void GRLobby::userChangedIcon(wxUint32 userID, wxUint32 iconID)
+{
+	GRUser *user = findUser(userID);
+	GRIcon *icon;
+
+	if(user == NULL) return; /* we don't care */
+
+	user->iconID = iconID;
+
+	user->icon = GRIconCache::getInstance()->findIcon(iconID);
+	if(user->icon != NULL) {
+		GRApplication::getInstance()->getMainWindow()->updateUserIcon(user);
+	}
+}
+/*-----------------------------------------------------------------------*/

@@ -28,7 +28,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 class GRFindPlayerWindow : public wxFrame
 {
 public:
-	GRFindPlayerWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size);
 	~GRFindPlayerWindow();
 
 	//gui elements
@@ -53,14 +52,21 @@ public:
 	//create controls
 	void createControls();
 
-	//main window
-	GRMainWindow *m_mainWindow;
-
 	//Events
 	void OnSearch(wxCommandEvent &event);
 	void OnUserDoubleClick(wxListEvent& event);
 
+	/* Get instance */
+	static GRFindPlayerWindow *getInstance();
+	static GRFindPlayerWindow *getInstance(wxFrame *parent);
+
 	DECLARE_EVENT_TABLE()
+
+protected:
+	GRFindPlayerWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size);
+
+private:
+	static GRFindPlayerWindow *_instance;
 };
 
 enum {

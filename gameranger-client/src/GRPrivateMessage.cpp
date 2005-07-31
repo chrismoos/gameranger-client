@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "GRPrivateMessage.h"
+#include "GRApplication.h"
+#include "GRMainConnection.h"
 #include "GRMainWindow.h"
 #include "memdebug.h"
 
@@ -100,9 +102,9 @@ void GRPrivateMessage::OnChatEditEnter(wxCommandEvent &event)
 	memcpy(payload, &temp, sizeof(wxUint32));
 	strcpy((char*)payload+sizeof(wxUint32), (char*)(const char*)msg.mb_str());
 
-	mainWindow->sendGRPacket(SEND_PRIVATE_MESSAGE, len, payload);
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(SEND_PRIVATE_MESSAGE, len, payload);
 
-	addTextWithColor(mainWindow->myNickname, *wxRED);
+	addTextWithColor(GRApplication::getInstance()->getMainConnection()->getProfile()->nickname, *wxRED);
 	addTextWithColor(wxT(": ") + chatEditField->GetValue() + wxT("\n"), *wxBLACK);
 
 	chatEditField->SetValue(wxT(""));

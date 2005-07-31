@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "Main.h"
 #include "GRBaseDefs.h"
+#include "GRApplication.h"
 #include <wx/dir.h>
 #include "memdebug.h"
 
@@ -28,54 +29,18 @@ IMPLEMENT_APP(MainApp)
 
 bool MainApp::OnInit()
 {
-	m_mainWindow = new GRMainWindow(wxT("GameRanger"), wxDefaultPosition, wxDefaultSize);
-	m_mainWindow->Show(true);
-	SetTopWindow(m_mainWindow);
-/*	if(FirstRun()) 
-	{
-		//Run reg wizard
-		m_regWindow = new GRRegWindow(wxT("reg"), wxDefaultPosition, wxSize(0,0));
-		m_regWindow->Show(false);
-		SetTopWindow(m_regWindow);
-
-		
-	}
-	else 
-	{
-		//Create Login Window
-		m_loginWindow = new GRLoginWindow(wxT("Login to GameRanger"), wxDefaultPosition,
-			wxSize(200, 200));
-		m_loginWindow->Show(true);
-		SetTopWindow(m_loginWindow);
-	}*/
-#ifdef WIN32
-#ifdef _DEBUG
-	_CrtDumpMemoryLeaks();
-#endif
-#endif
+	app = GRApplication::getInstance();
+	app->setWxMainApp(this);
+	app->Start();
+	SetTopWindow(app->getMainWindow());
 
 	return TRUE;
 }
-//--------------------------------------------------------------------------------
-bool MainApp::FirstRun()
+/*----------------------------------------------------------------------*/
+int MainApp::OnExit()
 {
-	wxDir dir;
-	wxString filename;
-
-	if(!dir.Exists(wxGetCwd()+wxT("/profiles"))) return true;
-
-	dir.Open(wxGetCwd()+wxT("/profiles"));
-
-	if(!dir.IsOpened()) 
-	{
-		return true;
-	}
-
-	bool cont = dir.GetFirst(&filename, wxT(""), wxDIR_FILES);
-	while(cont)
-	{
-		return false;
-	}	
-	return true;
+	delete(app);
+	return 0;
 }
-//--------------------------------------------------------------------------------
+/*----------------------------------------------------------------------*/
+

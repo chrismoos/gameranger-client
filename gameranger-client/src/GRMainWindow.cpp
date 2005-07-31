@@ -23,6 +23,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <algorithm>
 #include "GRMainWindow.h"
 #include "GRLoginWindow.h"
+#include "GRApplication.h"
+#include "GRLobbyManager.h"
+#include "GRIcon.h"
+#include "GRUser.h"
+#include "GRLogger.h"
 #include "GRLogWindow.h"
 #include "GRSecurity.h"
 #include "GRHostWindow.h"
@@ -52,10 +57,99 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
 GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSize &size)
-		: wxFrame((wxFrame *) NULL, -1, title, pos, size)
+		: wxFrame((wxFrame *) NULL, GRMAINWINDOW_ID, title, pos, size)
 {
-	//window specific stuff
+	/* Get logger */
+	logger = GRLogger::getInstance();
+
+	/* Get plugin manager */
+	pluginManager = GRPluginManager::getInstance();
+
+	/* image handlers */
+	wxInitAllImageHandlers();
+
+	/* setup image lists */
+	setupImageLists();
+
+	/* Setup window */
+	setupWindow();
+	createControls();
+	CentreOnScreen();
+
+	/* disable menus */
+	disableMenus();
+/*
+
+
+
 	
+	packetCounter = 0;
+
+	currentProfile = 0;
+	currentGameRoom = NULL;
+	currentPremiumInfoWindow = NULL;
+	searchWindow = NULL;
+
+	
+	*/
+}
+/*--------------------------------------------------------------------------------------*/
+void GRMainWindow::setupIconImageList()
+{
+	GRIconCache *iconCache = GRIconCache::getInstance();
+	iconImgList = new wxImageList(16, 16);
+	iconCache->imgList = iconImgList;
+	for(unsigned int x = 0; x < iconCache->Icons.size(); x++) {
+		iconCache->Icons[x]->imageIndex = iconImgList->Add(*iconCache->Icons[x]->image);
+	}
+	userListBox->AssignImageList(iconImgList, wxIMAGE_LIST_SMALL);
+}
+/*--------------------------------------------------------------------------------------*/
+void GRMainWindow::setupImageLists()
+{
+	wxString path = wxGetCwd();
+
+	/* Image List */
+	imgList = new wxImageList(16, 16);
+
+	/* Icons for games list */
+
+	/* players icon */
+	if(wxFile::Exists(wxT("images/players.xpm"))) {
+		wxBitmap pic(path+wxT("/images/players.xpm"), wxBITMAP_TYPE_XPM);
+		imgList->Add(pic);
+	}
+
+	/* lock icon */
+	if(wxFile::Exists(wxT("images/lock.xpm"))) {
+		wxBitmap pic2(path+wxT("/images/lock.xpm"), wxBITMAP_TYPE_XPM);
+		imgList->Add(pic2);
+	}
+
+	/* go icon */
+	if(wxFile::Exists(wxT("images/go.xpm"))) {
+		wxBitmap pic1(path+wxT("/images/go.xpm"), wxBITMAP_TYPE_XPM);
+		imgList->Add(pic1);
+	}
+	
+	/* Icon Image List */
+	if(wxFile::Exists(wxT("images/defaulticon.xpm"))) {
+		iconImgList = new wxImageList(16, 16);
+		wxBitmap pic3(path+wxT("/images/defaulticon.xpm"), wxBITMAP_TYPE_XPM);
+		iconImgList->Add(pic3);
+	}
+
+	if(imgList->GetImageCount() == 0) {
+		GRLogger::getInstance()->log(GRLogger::LOG_WARNING, wxT("The default images could not be loaded."));
+	}
+	else {
+		GRLogger::getInstance()->log(GRLogger::LOG_INFO, wxT("Default images successfully loaded."));
+	}
+}
+/*--------------------------------------------------------------------------------------*/
+void GRMainWindow::setupWindow()
+{
+	//window specific stuff	
 	SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
 
 	//Create Menu Bar
@@ -105,114 +199,265 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 	menuBar->Append(aboutMenu, wxT("&Help"));
 
 	SetMenuBar(menuBar);
-	
-
-	/* ---------------------------- Create Controls --------------------------- */
-	wxString path = wxGetCwd();
-
-
-	wxInitAllImageHandlers();
-
-	//Image List
-	imgList = new wxImageList(16, 16);
-
-	//Icons for games list
-	wxBitmap pic(path+wxT("/images/players.xpm"), wxBITMAP_TYPE_XPM);
-	imgList->Add(pic);
-	wxBitmap pic1(path+wxT("/images/go.xpm"), wxBITMAP_TYPE_XPM);
-	wxBitmap pic2(path+wxT("/images/lock.xpm"), wxBITMAP_TYPE_XPM);
-	imgList->Add(pic2);
-	imgList->Add(pic1);
-	//Icon Image List
-	iconImgList = new wxImageList(16, 16);
-	wxBitmap pic3(path+wxT("/images/defaulticon.xpm"), wxBITMAP_TYPE_XPM);
-	iconImgList->Add(pic3);
-	
-
-	createControls();
-
-	CentreOnScreen();
-
-	//Status Window
-	statusWindow = new GRConnectStatusWindow(this, wxT("Connecting to server..."), wxDefaultPosition, wxDefaultSize);
-
-	loginWindow = NULL;
-	regWindow = NULL;
-
-	//Log Window
-	logWindow = new GRLogWindow(this, wxT("Log Window."), wxDefaultPosition, wxDefaultSize);
-	logWindow->mainWindow = this;
-#ifdef SHOW_LOG_WINDOW
-	logWindow->Show(true);
-#endif
-
-	//Create socket and register event handler
-	m_socket = new wxSocketClient();
-	m_socket->SetEventHandler(*this, SOCKET_ID1);
-	m_socket->SetNotify(wxSOCKET_INPUT_FLAG | wxSOCKET_CONNECTION_FLAG | wxSOCKET_LOST_FLAG);
-	m_socket->Notify(true);
-
-	lastIndex = -1;
-
-	loadColorProfile();
-	loadPlugins();
-
-	//Init icon cache
-	iconCache = new GRIconCache();
-	iconCache->colorTable = colorTable;
-	iconCache->imgList = iconImgList;
-	iconCache->LoadCache(wxT("Icon_Cache.bin"));
-
-	//Make our timer
-	timer = new wxTimer(this, TIMER_ID);
-	
-	packetCounter = 0;
-
-	currentProfile = 0;
-	currentGameRoom = NULL;
-	currentPremiumInfoWindow = NULL;
-	searchWindow = NULL;
-
 }
-//-------------------------------------------------------------------------------------
+/*--------------------------------------------------------------------------------------*/
+void GRMainWindow::OnWindowClose(wxCloseEvent &event)
+{
+	logger->log(GRLogger::LOG_INFO, wxT("Main window has been successfully closed."));
+	GRApplication::getInstance()->mainWindowHasClosed();
+	GRApplication::getInstance()->closeMainConnection();
+	this->Destroy();
+}
+/*--------------------------------------------------------------------------------------*/
+void GRMainWindow::enableMenus()
+{
+	hostMenu->Enable(HOST_MENU_ITEM, true);
+	optionsMenu->Enable(CHANGE_NICK_MENU_ITEM, true);
+	optionsMenu->Enable(CHANGE_NAME_MENU_ITEM, true);
+	optionsMenu->Enable(CHANGE_PASSWORD_MENU_ITEM, true);
+	optionsMenu->Enable(CHANGE_ICON_MENU_ITEM, true);
+	optionsMenu->Enable(CHANGE_MY_GAMES_ITEM, true);
+	usersMenu->Enable(FIND_PLAYER_MENU, true);
+	fileMenu->Enable(FILE_MENU_LOGOUT, true);
+}
+/*--------------------------------------------------------------------------------------*/
+void GRMainWindow::disableMenus()
+{
+	hostMenu->Enable(HOST_MENU_ITEM, false);
+	optionsMenu->Enable(CHANGE_NICK_MENU_ITEM, false);
+	optionsMenu->Enable(CHANGE_NAME_MENU_ITEM, false);
+	optionsMenu->Enable(CHANGE_PASSWORD_MENU_ITEM, false);
+	optionsMenu->Enable(CHANGE_ICON_MENU_ITEM, false);
+	optionsMenu->Enable(CHANGE_MY_GAMES_ITEM, false);
+	usersMenu->Enable(FIND_PLAYER_MENU, false);
+	fileMenu->Enable(FILE_MENU_LOGOUT, false);
+}
+/*--------------------------------------------------------------------------------------*/
 GRMainWindow::~GRMainWindow()
 {
 	wxUint32 x;
 
-	/* timer */
-	delete(timer);
-
-	/* Destroy socket */
-	delete(m_socket);
-	
 	/* delete popup menu */
-	delete(popupMenu);
+	if(popupMenu != NULL)	delete(popupMenu);
+
+	/* cleanup image lists */
+	iconImgList = NULL;
+}
+/*------------------------------------------------------------------------------------*/
+void GRMainWindow::clearLobbyComboBox()
+{
+	lobbyComboBox->Clear();
+}
+/*------------------------------------------------------------------------------------*/
+void GRMainWindow::addLobbyToComboBox(GRLobby *lobby)
+{
+	wxString comboString;
+	
+	comboString = lobby->lobbyName + wxT("  -  ") + wxString::Format(wxT("%d"), lobby->userCount);
+	lobbyComboBox->Append(comboString, (void*)lobby);
+}
+/*------------------------------------------------------------------------------------*/
+void GRMainWindow::setCurrentLobbyInComboBox(GRLobby *lobby)
+{
+	int index;
+	wxString comboString;
+
+	index = getLobbyComboIndex(lobby);
+	if(index == -1) return;
+
+	comboString = lobby->lobbyName + wxT("  -  ") + wxString::Format(wxT("%d"), lobby->userCount);
+
+	lobbyComboBox->SetString(index, comboString);
+	lobbyComboBox->SetSelection(index);
+}
+/*------------------------------------------------------------------------------------*/
+void GRMainWindow::updateLobbyInComboBox(GRLobby *lobby)
+{
+	int index;
+	wxString comboString;
+
+	index = getLobbyComboIndex(lobby);
+	if(index == -1) return;
+
+	comboString = lobby->lobbyName + wxT("  -  ") + wxString::Format(wxT("%d"), lobby->userCount);
+
+	lobbyComboBox->SetString(index, comboString);
+
+	/* select current lobby */
+	index = getLobbyComboIndex(GRApplication::getInstance()->getMainConnection()->getLobbyManager()->getCurrentLobby());
+	if(index != -1)	lobbyComboBox->SetSelection(index);
+}
+/*------------------------------------------------------------------------------------*/
+int GRMainWindow::getLobbyComboIndex(GRLobby *lobby)
+{
+	GRLobby *temp;
+	for(unsigned int x = 0; x < lobbyComboBox->GetCount(); x++) {
+		temp = (GRLobby*)lobbyComboBox->GetClientData(x);
+		if(temp == NULL) continue;
+		if(temp->lobbyID == lobby->lobbyID) return x;
+	}
+	GRLogger::getInstance()->log(GRLogger::LOG_ERROR, wxT("Find lobby combo box index error: For some odd reason, we couldn't find the lobby's item in the combo box. Lobby ID: ") + wxString::Format(wxT("%d"), lobby->lobbyID));
+	return -1;
+}
+/*------------------------------------------------------------------------------------*/
+void GRMainWindow::clearUserListBox()
+{
+	userListBox->DeleteAllItems();
+}
+/*-------------------------------------------------------------------------------------*/
+void GRMainWindow::displayUserJoinedRoom(GRUser *user)
+{
+	addTextWithColor(wxT("<< ") + user->nick + wxT(" has joined the room >>\n"), *wxRED);
+}
+/*-------------------------------------------------------------------------------------*/
+void GRMainWindow::displayUserJoinedGR(GRUser *user)
+{
+	addTextWithColor(wxT("<< ") + user->nick + wxT(" has joined GameRanger >>\n"), *wxRED);
+}
+/*-------------------------------------------------------------------------------------*/
+void GRMainWindow::displayUserLeftRoom(GRUser *user)
+{
+	addTextWithColor(wxT("<< ") + user->nick + wxT(" has left the room >>\n"), *wxRED);
+}
+/*------------------------------------------------------------------------------------*/
+void GRMainWindow::displayUserLeftGR(GRUser *user)
+{
+	addTextWithColor(wxT("<< ") + user->nick + wxT(" has left GameRanger >>\n"), *wxRED);
+}
+/*------------------------------------------------------------------------------------*/
+void GRMainWindow::displayUserLeftGR(GRUser *user, wxString reason)
+{
+	addTextWithColor(wxT("<< ") + user->nick + wxT(" was disconnected(") + reason + wxT(") >>\n"), *wxRED);
+}
+/*------------------------------------------------------------------------------------*/
+void GRMainWindow::displayGameRoomOpened(GRGameRoom *gameRoom)
+{
+	addTextWithColor(wxT("<< ") + gameRoom->host + wxT(" has started a ") + gameRoom->Plugin->gameName + wxT(" room >>\n"), *wxRED);
+}
+/*------------------------------------------------------------------------------------*/
+void GRMainWindow::displayGameRoomClosed(GRGameRoom *gameRoom)
+{
+	addTextWithColor(wxT("<< ") + gameRoom->host + wxT(" has closed a ") + gameRoom->Plugin->gameName + wxT(" room >>\n"), *wxRED);
+}
+/*------------------------------------------------------------------------------------*/
+void GRMainWindow::updateUserIcon(GRUser *user)
+{
+	int index = getUserListBoxIndex(user);
+	if(index != -1 && user->icon != NULL) userListBox->SetItemImage(index, user->icon->imageIndex, user->icon->imageIndex);
+}
+/*------------------------------------------------------------------------------------*/
+void GRMainWindow::updateUserInListBox(GRUser *user)
+{
+	int index = getUserListBoxIndex(user);
+	if(index != -1) userListBox->SetItemText(index, user->nick);
+}
+/*------------------------------------------------------------------------------------*/
+void GRMainWindow::addUserToListBox(GRUser *user)
+{
+	int index;
+	index = userListBox->InsertItem(userListBox->GetItemCount(), user->nick);
+	if(index != -1) {
+		userListBox->SetItemData(index, (long)user);
+		if(user->icon != NULL) userListBox->SetItemImage(index, user->icon->imageIndex);
+		else userListBox->SetItemImage(index, 0);
+	}
+	setListInfo(user);
+}
+/*-------------------------------------------------------------------------------------*/
+void GRMainWindow::removeUserFromListBox(GRUser *user)
+{
+	int index;
+	index = getUserListBoxIndex(user);
+	if(index != -1) userListBox->DeleteItem(index);
+}
+/*-------------------------------------------------------------------------------------*/
+int GRMainWindow::getUserListBoxIndex(GRUser *user)
+{
+	for(unsigned int x = 0; x < userListBox->GetItemCount(); x++) {
+		if(userListBox->GetItemData(x) == (long)user) return x;
+	}
+	return -1;
+}
+/*-------------------------------------------------------------------------------------*/
+void GRMainWindow::clearGameRooms()
+{
+	gameRoomList->DeleteAllItems();
+}
+/*-------------------------------------------------------------------------------------*/
+void GRMainWindow::addGameRoomToListView(GRGameRoom *gameRoom)
+{
+	int index;
+	wxString str;
+	GRPlugin *plugin;
+
+	if(gameRoom == NULL) return;
+
+	plugin = gameRoom->Plugin;
+
+	/* add subitems and main item */
+	index = gameRoomList->InsertItem(gameRoomList->GetItemCount(), plugin->gameName, plugin->imageIndex);
+	if(index == -1) return;
+	gameRoomList->SetItem(index, 1, gameRoom->host, -1);
+	gameRoomList->SetItem(index, 2, gameRoom->description);
+	gameRoomList->SetItem(index, 3, gameRoom->ip);
+	gameRoomList->SetItem(index, 4, wxString::Format(wxT("%d/%d"), gameRoom->currentPlayers, gameRoom->maxPlayers));
+
+	/* Set item data so we can find it */
+	gameRoomList->SetItemData(index, (long)gameRoom);
 
 	
-	cleanupGR();
-
-	if(currentGameRoom != NULL)
-	{
-		currentGameRoom->mainWindow = NULL;
-	}
-
-
-	for(x = 0; x < Plugins.size(); x++)
-	{
-		delete(Plugins[x]);
-	}
-	Plugins.clear();
-
-	if(iconCache != NULL) 
-	{
-		iconCache->SaveCache(wxT("Icon_Cache.bin"));
-		delete(iconCache);
-	}
-
-	if(colorTable != NULL) delete[] colorTable;
-
+	/* set game room list info */
+	setGameRoomListInfo(gameRoom);
 }
-//------------------------------------------------------------------------------------
+/*-------------------------------------------------------------------------------------*/
+void GRMainWindow::updateGameRoomInListView(GRGameRoom *gameRoom)
+{
+	int index;
+
+	if(gameRoom == NULL) return;
+
+	index = getGameItemIndex(gameRoom);
+	if(index == -1) return;
+
+	gameRoomList->SetItem(index, 1, gameRoom->host, -1);
+	gameRoomList->SetItem(index, 2, gameRoom->description);
+	gameRoomList->SetItem(index, 3, gameRoom->ip);
+	gameRoomList->SetItem(index, 4, wxString::Format(wxT("%d/%d"), gameRoom->currentPlayers, gameRoom->maxPlayers));
+
+	setGameRoomListInfo(gameRoom);
+}
+/*-------------------------------------------------------------------------------------*/
+void GRMainWindow::removeGameFromListView(GRGameRoom *gameRoom)
+{
+	wxInt32 index = getGameItemIndex(gameRoom);
+	if(index != -1) gameRoomList->DeleteItem(index);
+}
+/*-------------------------------------------------------------------------------------*/
+void GRMainWindow::OnLoadCacheDone(wxCommandEvent &evt)
+{
+	GRLogger::getInstance()->log(GRLogger::LOG_INFO, wxT("Icon cache successfully loaded."));
+	setupIconImageList();
+}
+/*-------------------------------------------------------------------------------------*/
+void GRMainWindow::OnPluginLoadDone(wxCommandEvent &evt)
+{
+	GRLogger::getInstance()->log(GRLogger::LOG_INFO, wxT("Plugins successfully loaded."));
+	setupPluginImageList();
+}
+/*-------------------------------------------------------------------------------------*/
+void GRMainWindow::setupPluginImageList()
+{
+	GRPluginManager *pluginManager = GRPluginManager::getInstance();
+	GRPlugin *plugin;
+
+	for(unsigned int x = 0; x < pluginManager->getPluginCount(); x++) {
+		plugin = pluginManager->getPluginAt(x);
+		if(plugin == NULL) continue;
+		if(plugin->image == NULL) continue;
+		pluginManager->getPluginAt(x)->imageIndex = imgList->Add(*pluginManager->getPluginAt(x)->image);
+	}
+}
+/*--------------------------------------------------------------------------------------*/
 void GRMainWindow::cleanupGR()
 {
 	int x;
@@ -268,7 +513,9 @@ void GRMainWindow::createControls()
 
 	gameRoomList = new wxListView(this, GAMELIST_ID, wxDefaultPosition,
 		wxSize(510, 215), wxLC_REPORT | wxLC_SORT_ASCENDING | wxLC_SINGLE_SEL | wxLC_ALIGN_LEFT);
+	
 	gameRoomList->AssignImageList(imgList, wxIMAGE_LIST_SMALL);
+	
 	gameRoomList->InsertColumn(0, wxT("Game Name"), wxLIST_FORMAT_LEFT, 175);
 	gameRoomList->InsertColumn(1, wxT("Host"), wxLIST_FORMAT_LEFT, 155);
 	gameRoomList->InsertColumn(2, wxT("Description"), wxLIST_FORMAT_LEFT, 250);
@@ -299,6 +546,7 @@ void GRMainWindow::createControls()
 		wxSize(600, 300), wxTE_MULTILINE | wxTE_NOHIDESEL | wxTE_READONLY | wxTE_RICH2 | wxTE_AUTO_URL);
 	//set attributes for chat window
 	chatTextCtrl->SetDefaultStyle(wxTextAttr(*wxRED, *wxWHITE));
+	chatTextCtrl->SetValue(wxT(""));
 
 	chatEditField = new wxTextCtrl(this, CHATEDIT_ID, wxT(""), wxDefaultPosition,
 		wxSize(50, 20), wxTE_PROCESS_ENTER);
@@ -306,7 +554,7 @@ void GRMainWindow::createControls()
 	//User list listbox
 	userListBox = new wxListCtrl(this, USERLISTBOX_ID, wxDefaultPosition,
 		wxSize(200, 300), wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_SORT_ASCENDING  | wxLC_NO_HEADER | wxLC_ALIGN_LEFT);
-	userListBox->AssignImageList(iconImgList, wxIMAGE_LIST_SMALL);
+
 	userListBox->InsertColumn(0, wxT("nick"), wxLIST_FORMAT_LEFT, 175);
 
 	//Chat Sizer and middle sizer
@@ -387,26 +635,12 @@ void GRMainWindow::OnUnableToConnect()
 //-------------------------------------------------------------------------------
 void GRMainWindow::OnDisconnect()
 {
-	logWindow->logText(wxT("Disconnected from GameRanger server"));	
 	addTextWithColor(wxT("<< Disconnected from GameRanger >>\n"), *wxRED);
 
-	if(m_socket != NULL) 
-	{
-		m_socket->Close();
-		delete(m_socket);
-		m_socket = NULL;
-	}
-	loggedIn = false;
 	userListBox->DeleteAllItems();
 	gameRoomList->DeleteAllItems();
 	lobbyComboBox->Clear();
-	
-	cleanupGR();
-
-	fileMenu->Enable(FILE_MENU_LOGOUT, false);
-
-	timer->Stop();
-	statusWindow->Show(false);
+	disableMenus();
 }
 //-----------------------------------------------------------------------------
 void GRMainWindow::OnDataAvailable()
@@ -473,104 +707,6 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 	//Big ugly List of Commands
 	switch(Packet->header->command)
 	{
-		case CLIENT_VERIFY:
-			clientVerify(Packet);
-		break;
-
-		case SERVER_VERIFY_ACK:
-			statusWindow->statusIndicator->SetValue(4);
-		break;
-
-		case READY_TO_PROCESS:
-			statusWindow->statusIndicator->SetValue(5);
-			loginToGR(Packet);
-		break;
-
-		case INVALID_LOGIN_PASSWORD:
-			statusWindow->Show(false);
-			invalidPassword();
-		break;
-
-		case SERVER_MESSAGE:
-			serverMessage(Packet);
-		break;
-
-		case BAN_TIME_LEFT:
-			banTimeLeft(Packet);
-		break;
-
-		case MY_USER_INFO:
-			myUserInfo(Packet);
-		break;
-
-		case PUBLIC_LOBBY_LIST:
-			publicLobbyList(Packet);
-		break;	
-
-		case LOBBY_USER_LIST:
-			lobbyUserList(Packet);
-		break;
-
-		case LOBBY_USER_ACTION:
-			currentLobby->userAction(Packet);
-		break;
-
-		case USER_LEFT_SERVER:
-			currentLobby->userLeftServer(Packet);
-		break;
-
-		case LOBBY_CHAT_MESSAGE:
-			currentLobby->chatMessage(Packet, 0);
-		break;	
-
-		case LOBBY_CHAT_MESSAGE_ME:
-			currentLobby->chatMessage(Packet, 1);
-		break;
-
-		case GAME_ROOMS_LIST:
-			gameRoomsList(Packet);
-		break;
-
-		case GAME_ROOM_OPENED:
-			gameRoomOpened(Packet);
-		break;
-
-		case GAME_ROOM_CLOSED:
-			gameRoomClosed(Packet);
-		break;
-
-		case INVALID_ACCOUNT:
-			invalidAccount();
-		break;
-
-		case USER_CHANGED_NICKNAME:
-			currentLobby->userChangedNick(Packet);
-		break;
-
-		case USER_IS_IDLE:
-			currentLobby->userIsIdle(Packet);
-		break;
-
-		case USER_IS_ACTIVE:
-			currentLobby->userIsActive(Packet);
-		break;
-
-		case PLAYER_JOINED_GAME_ROOM:
-			playerJoinedGameRoom(Packet);
-		break;
-
-		case PLAYER_LEFT_GAME_ROOM:
-			playerLeftGameRoom(Packet);
-		break;
-
-		case RECEIVED_ICON_DATA:
-			receivedIconData(Packet);
-		break;
-
-		case RCV_PRIVATE_MESSAGE:
-			receivedPrivateMessage(Packet);
-		break;
-
 		case GAME_ROOM_USER_LIST:
 			gameRoomUserList(Packet);
 		break;
@@ -587,62 +723,8 @@ void GRMainWindow::handlePacket(GR_PACKET *Packet)
 			if(currentGameRoom != NULL) currentGameRoom->chatMessage(Packet, 0);
 		break;
 
-		case GAME_ROOM_FULL:
-			msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join is full, please try again later."), wxT("Join room error"), wxICON_ERROR);
-			msgDlg->ShowModal();
-			delete(msgDlg);
-		break;
-
-		case GAME_ROOM_NO_LATE_JOINERS:
-			msgDlg = new wxMessageDialog(this, wxT("The game room you are trying to join does not allow late joiners."), wxT("Join room error"), wxICON_ERROR);
-			msgDlg->ShowModal();
-			delete(msgDlg);
-		break;
-
-		case GAME_ROOM_INVALID_PASSWORD:
-			msgDlg = new wxMessageDialog(this, wxT("The game room password you specified is invalid."), wxT("Join room error"), wxICON_ERROR);
-			msgDlg->ShowModal();
-			delete(msgDlg);
-		break;
-
-		case PASSWORD_CHANGE_SUCCESSFUL:
-			msgDlg = new wxMessageDialog(this, wxT("Your password was successfully changed."), wxT("Password change"), wxICON_INFORMATION);
-			msgDlg->ShowModal();
-			delete(msgDlg);
-		break;
-
-		case PM_ERROR_USER_IN_GAME:
-			msgDlg = new wxMessageDialog(this, wxT("Error: The user you are trying to private message is in a game."), wxT("Private Message Error"), wxICON_INFORMATION);
-			msgDlg->ShowModal();
-			delete(msgDlg);
-		break;
-
-		case REG_USER_INFO:
-			regularUserInfo(Packet);
-		break;
-
-		case PREMIUM_USER_INFO:
-			premiumUserInfo(Packet);
-		break;
-
-		case RECV_PREMIUM_USER_IMAGE:
-			recvPremiumUserImage(Packet);
-		break;
-
-		case USER_CHANGED_ICON:
-			userChangedIcon(Packet);
-		break;
-
-		case FIND_USER_RESULTS:
-			findUserResults(Packet);
-		break;
-
 		case APP_BANNER:
 			appBanner(Packet);
-		break;
-
-		case GAME_ROOM_STATUS_CHANGED:
-			gameRoomStatusChanged(Packet);
 		break;
 
 		case GAME_ROOM_LAUNCHED:
@@ -680,369 +762,6 @@ void GRMainWindow::gameRoomLaunched(GR_PACKET *Packet)
 	currentGameRoom->addTextWithColor(wxT("<< Game Started >>\n"), *wxRED);
 	currentGameRoom->addTextWithColor(wxT("<< Game Room Password: ")+pass+wxT(" >>\n"), *wxRED);
 }
-//--------------------------------------------------------------------------------
-void GRMainWindow::invalidAccount()
-{
-	wxMessageDialog *msgDlg = new wxMessageDialog(this, wxT("The account you specified is either invalid or hasn't been activated, please check your email and try again."), wxT("Login Error"), wxICON_ERROR);
-	msgDlg->ShowModal();
-	delete(msgDlg);
-	
-	statusWindow->Show(false);
-	//logWindow->Show(false);
-	//this->Show(false);
-}
-//-----------------------------------------------------------------------------
-void GRMainWindow::gameRoomsList(GR_PACKET *Packet)
-{
-	wxUint8 *buf;
-	wxUint32 grID, iconID, gameCount;
-	wxUint8 status, locked;
-	wxUint32 x;
-	wxString ip, description, nick;
-	GR_GAME_ROOM_PACKET *roomHeader;
-
-	buf = Packet->payload;
-
-	//game room count
-	memcpy(&gameCount, buf, sizeof(wxUint32));
-	gameCount = ntohl(gameCount);
-	buf += sizeof(wxUint32);
-
-	gameRoomList->DeleteAllItems();
-	for(x = 0; x < (int)GameRooms.size(); x++)
-	{
-		delete(GameRooms[x]);
-	}
-	GameRooms.clear();
-
-	for(x = 0; x < gameCount; x++)
-	{
-		roomHeader = (GR_GAME_ROOM_PACKET*)buf;
-
-		//endianess
-		roomHeader->currentPlayers = ntohl(roomHeader->currentPlayers);
-		roomHeader->maxPlayers = ntohl(roomHeader->maxPlayers);
-		roomHeader->gameRoomID = ntohl(roomHeader->gameRoomID);
-		roomHeader->gameCode = ntohl(roomHeader->gameCode);
-
-		ip = wxString::Format(wxT("%d.%d.%d.%d"), roomHeader->ipAddress[0] ^ 0xFF, roomHeader->ipAddress[1] ^ 0xFF, roomHeader->ipAddress[2] ^ 0xFF, roomHeader->ipAddress[3] ^ 0xFF);
-
-		buf += sizeof(GR_GAME_ROOM_PACKET);
-
-		//locked
-		locked = *buf;
-		buf++;
-
-		//description
-		description = bufToStr(buf);
-		buf += description.Len() + 1;
-
-		//gr id
-		memcpy(&grID, buf, sizeof(wxUint32));
-		grID = ntohl(grID);
-		buf += sizeof(wxUint32);
-
-		//icon id
-		memcpy(&iconID, buf, sizeof(wxUint32));
-		iconID = ntohl(iconID);
-		buf += sizeof(wxUint32);
-
-		//status
-		status = *buf;
-		buf++;
-
-		//nick
-		nick = bufToStr(buf);
-		buf += nick.Len() + 1;
-
-		//game room list?
-		buf += *(buf)+1;
-
-		addGameRoom(roomHeader->gameRoomID, roomHeader->gameCode, roomHeader->maxPlayers,
-			roomHeader->currentPlayers, ip, locked, description, grID, iconID,
-			status, nick, false);
-		
-		//logWindow->logText(nick + wxT(" ") + description + wxT(" ") + ip);
-	}
-}
-//-----------------------------------------------------------------------
-void GRMainWindow::lobbyUserList(GR_PACKET *Packet)
-{
-	wxUint8 *buf;
-	wxUint32 x;
-	wxUint8 status;
-	wxUint32 userCount, lobbyID, userID, iconID, imageIndex = 0;
-	wxUint32 missingIconCount = 0;
-	wxString nick;
-	wxInt32 index;
-	GRIcon *icon;
-	GRUser *user;
-
-	buf = Packet->payload;
-
-	buf += sizeof(wxUint32); //some padding
-
-	//lobby id for this user list
-	memcpy(&lobbyID, buf, sizeof(wxUint32));
-	lobbyID = ntohl(lobbyID);
-	buf += sizeof(wxUint32);
-
-	loggedIn = true;
-
-	currentLobby = findLobby(lobbyID);
-
-	currentLobby->ClearUsers();
-	userListBox->DeleteAllItems();
-
-	chatTextCtrl->AppendText(wxT("______")+currentLobby->lobbyName+wxT("______\n"));
-
-	lobbyComboBox->SetSelection(currentLobby->comboIndex);
-
-	//user count
-	memcpy(&userCount, buf, sizeof(wxUint32));
-	userCount = ntohl(userCount);
-	buf += sizeof(wxUint32)*2;
-
-	currentLobby->userCount = 0;
-
-	for(x = 0; x < userCount; x++) //for each user
-	{
-		//user id
-		memcpy(&userID, buf, sizeof(wxUint32));
-		userID = ntohl(userID);
-		buf += sizeof(wxUint32);
-
-		//icon id
-		memcpy(&iconID, buf, sizeof(wxUint32));
-		iconID = ntohl(iconID);
-		buf += sizeof(wxUint32);
-
-		//status
-		status = *buf;
-		buf++;
-
-		//nickname 
-		nick = bufToStr(buf);
-		buf += nick.Len() + 1;
-
-		//make user
-		user = new GRUser(nick, userID, iconID);
-
-		//game list?
-		parseGamesListForUser(user, buf);
-		buf += *(buf)+1;
-
-		
-		user->SetStatus(status);
-		icon = iconCache->findIcon(iconID);
-		user->icon = icon;
-		if(icon == NULL) 
-		{
-			if(iconID != 0) missingIconCount++;
-			imageIndex = 0;
-		}
-		else imageIndex = icon->imageIndex;
-
-		//add to list box
-		index = userListBox->InsertItem(userListBox->GetItemCount(), nick, imageIndex);
-		if(index != -1) userListBox->SetItemData(index, (long)user);
-		setListInfo(user);
-		
-
-		currentLobby->AddUser(user, 0);
-
-		//logWindow->logText(nick);
-	}
-	currentLobby->updateComboString();
-	/* TODO */
-	requestMissingIconsFromUserList(missingIconCount);
-}
-//-----------------------------------------------------------------------------
-void GRMainWindow::publicLobbyList(GR_PACKET *Packet)
-{
-	wxUint8 *buf;
-	wxUint32 x;
-	wxUint32 lobbyCount, lobbyID, users;
-	wxUint8 type;
-	wxString lobbyName;
-	wxString comboString;
-	GRLobby *lobby;
-
-	buf = Packet->payload;
-
-
-	memcpy(&lobbyCount, buf, sizeof(wxUint32));
-	lobbyCount = ntohl(lobbyCount);
-	buf += sizeof(wxUint32);
-
-	for(x = 0; x < Lobbies.size(); x++)
-	{
-		delete(Lobbies[x]);
-	}
-	Lobbies.clear();
-	lobbyComboBox->Clear();
-
-
-	for(x = 0; x < lobbyCount; x++)
-	{
-		//lobby id
-		memcpy(&lobbyID, buf, sizeof(wxUint32));
-		lobbyID = ntohl(lobbyID);
-		buf += sizeof(wxUint32);
-
-		//users 
-		memcpy(&users, buf, sizeof(wxUint32));
-		users = ntohl(users);
-		buf += sizeof(wxUint32);
-
-		//type
-		type = *buf;
-		buf++;
-
-		//lobby name
-		lobbyName = bufToStr(buf);
-		buf += lobbyName.Len() + 1;
-
-		lobby = new GRLobby(lobbyName, lobbyID, type);
-		lobby->SetUserCount(users);
-		lobby->comboIndex = lobbyComboBox->GetCount();
-		lobby->mainWindow = this;
-
-		comboString = lobby->lobbyName + wxT("  -  ") + wxString::Format(wxT("%d"), lobby->userCount);
-		lobbyComboBox->Append(comboString);
-
-		Lobbies.push_back(lobby);		
-	}
-}
-//-------------------------------------------------------------------------------
-void GRMainWindow::myUserInfo(GR_PACKET *Packet)
-{
-	wxUint8 *payload;
-	wxUint32 userID;
-	wxString nick, name, email;
-	payload = Packet->payload;
-
-	payload += sizeof(wxUint32); //unknown
-
-	//user id
-	memcpy(&userID, payload, sizeof(wxUint32));
-	userID = ntohl(userID);
-	payload += sizeof(wxUint32);
-
-	//email
-	email = bufToStr(payload);
-	payload += email.Len() + 1;
-
-	//nickname
-	nick = bufToStr(payload);
-	payload += nick.Len() + 1;
-
-
-	//real name
-	name = bufToStr(payload);
-	payload += name.Len() + 1;
-
-	myUserID = userID;
-	myNickname = nick;
-	
-	if(loginWindow != NULL) 
-	{
-		loginWindow->currentProfile->email = email;
-		loginWindow->currentProfile->nickname = nick;
-		loginWindow->currentProfile->realname = name;
-		loginWindow->currentProfile->grID = userID;
-		loginWindow->currentProfile->Write();
-	}
-	currentProfile = loginWindow->currentProfile;
-	statusWindow->Show(false);
-
-}	
-//---------------------------------------------------------------------------
-void GRMainWindow::serverMessage(GR_PACKET *Packet)
-{
-	wxString message = bufToStr(Packet->payload);
-	wxUint32 x;
-	
-	//replace the 0x0d's with 0x0a's(linux doesen't accept the carriage return well	
-	for(x = 0; x < message.Len(); x++) 
-	{
-		if(message[x] == 0x0d) message[x] = 0x0a;
-	}
-
-	chatTextCtrl->AppendText(message+wxT("\n"));
-
-	if(loginWindow != NULL) loginWindow->Show(false);
-	statusWindow->Show(false);
-}
-//----------------------------------------------------------------------------
-void GRMainWindow::banTimeLeft(GR_PACKET *Packet)
-{
-	GR_BAN_TIME_PACKET *banPacket;
-	wxUint32 seconds_left, remain;
-	wxUint32 days, hours, minutes, seconds;
-	char tleft[64];
-
-	banPacket = (GR_BAN_TIME_PACKET*)Packet->payload;
-
-	banPacket->time_left = ntohl(banPacket->time_left);
-
-	
-
-	seconds_left = banPacket->time_left;
-
-	days = seconds_left/86400;
-	remain = seconds_left % 86400;
-	hours = remain/3600;
-	remain = seconds_left % 3600;
-	minutes = remain/60;
-	remain = seconds_left % 60;
-	seconds = remain;
-
-	sprintf(tleft, "%d days, %d hours, %d minutes, %d seconds\n", days, hours, minutes, seconds);
-	wxString detail = bufToStr((wxUint8*)tleft);
-	logWindow->logText(wxT("Ban detail: ") + detail);
-}
-//----------------------------------------------------------------------------
-void GRMainWindow::invalidPassword()
-{
-	wxMessageDialog *msgDlg = new wxMessageDialog(this, wxT("The password you entered is invaild, please revise your password and try again."), wxT("Login Error"), wxICON_ERROR);
-	msgDlg->ShowModal();
-	delete(msgDlg);
-}
-//-------------------------------------------------------------------------------
-void GRMainWindow::clientVerify(GR_PACKET *Packet)
-{
-	GR_CLIENT_AUTH_PACKET *payload;
-	GR_CLIENT_AUTH_ACK_PACKET authAckPacket;
-
-	payload = (GR_CLIENT_AUTH_PACKET*)Packet->payload;
-
-	//convert endianess
-	payload->code = ntohl(payload->code);
-	payload->version = ntohl(payload->version);
-	payload->version1 = ntohl(payload->version1);
-	payload->version2 = ntohl(payload->version2);
-	payload->version3 = ntohl(payload->version3);
-
-	//emulate latest version log
-	logWindow->logText(wxString::Format(wxT("Emulating client version %08X..."), payload->version));
-	
-	//Craft Response
-	authAckPacket.clientVersion = htonl(payload->version);
-	authAckPacket.verifyCode = htonl(encryptVerifyCode(payload->code));
-	authAckPacket.padding = htonl(0);
-	authAckPacket.srvVerifyCode = htonl(rand());
-
-	m_verifyCode = authAckPacket.verifyCode;
-
-	//logWindow->logData((wxUint8*)&authAckPacket, sizeof(authAckPacket));
-
-	sendGRPacket(CLIENT_VERIFY_ACK, sizeof(authAckPacket), (wxUint8*)&authAckPacket);
-
-	statusWindow->SetTitle(wxT("Checking versions..."));
-	statusWindow->statusIndicator->SetValue(3);
-}
-//------------------------------------------------------------------------------
 void GRMainWindow::sendGRPacket(wxUint32 command, wxUint32 payloadLength, wxUint8 *payload)
 {
 	GR_PACKET_HEADER header;
@@ -1116,157 +835,6 @@ void GRMainWindow::connectToServer()
 
 }
 //----------------------------------------------------------------------------
-void GRMainWindow::loginToGR(GR_PACKET *Packet)
-{
-	GR_LOGIN_PACKET loginPacketHeader;
-	wxUint32 ip = 0x7f000001;
-	wxUint32 GRID;
-	wxUint32 len = 0, pos = 0;
-	wxUint8 *payload = NULL;
-	bool emailLogin;
-
-	if(myUserID == 0) emailLogin = true;
-	else emailLogin = false;
-
-	char temp[1];
-	char *options = "\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
-	//options[3] = 0x08;
-	char *location = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF"; //location
-		
-	char *staticBuf = "\x90\x09\x21\x00\x00\x00\x00";
-
-	wxUint8 *plgList = makePluginsList();
-
-	statusWindow->SetTitle(wxT("Logging in..."));
-
-	if(emailLogin == true) loginPacketHeader.loginType = 2; //email based login
-	else loginPacketHeader.loginType = 1;
-
-	GRID = htonl(myUserID);
-	if(emailLogin == true) loginPacketHeader.previousGRID = htonl(0);
-	else loginPacketHeader.previousGRID = GRID;
-
-	//mac
-	loginPacketHeader.macAddress[0] = loginWindow->currentProfile->macAddress[0];
-	loginPacketHeader.macAddress[1] = loginWindow->currentProfile->macAddress[1];
-	loginPacketHeader.macAddress[2] = loginWindow->currentProfile->macAddress[2];
-	loginPacketHeader.macAddress[3] = loginWindow->currentProfile->macAddress[3];
-	loginPacketHeader.macAddress[4] = loginWindow->currentProfile->macAddress[4];
-	loginPacketHeader.macAddress[5] = loginWindow->currentProfile->macAddress[5];
-
-	//xor each byte
-	for(wxUint32 x = 0; x < 6; x++) loginPacketHeader.macAddress[x] ^= 0x77;
-
-	if(emailLogin == true) loginPacketHeader.checksum = htonl(Algorithm((char*)&m_verifyCode, (char*)&loginPacketHeader.macAddress, 0, ip, 2));
-	else loginPacketHeader.checksum = htonl(Algorithm((char*)&m_verifyCode, (char*)&loginPacketHeader.macAddress, ntohl(GRID), ip, 2));
-	ip = htonl(ip);
-	ip ^= 0xffffffff;
-
-	//construct packet
-	len += sizeof(wxUint8); //login type
-	len += sizeof(wxUint32); //gr id
-	len += 6; //mac address size
-	len += 4; //lan ip
-	len += sizeof(wxUint32); //checksum
-
-	len += strlen(GRpassword) + 1;
-	
-	if(emailLogin == true) len += strlen(GRemail) + 1;
-	else len += sizeof(wxUint32); //gr id
-
-	len += 16; //options
-	if(*currentProfile->gamesList != 0)
-		len += *(currentProfile->gamesList)+1;
-	len += 12; //location
-	len += ((Plugins.size()-2)*6)+9; //plugins
-	len += sizeof(wxUint32); //end thing
-
-	payload = new wxUint8[len];
-
-	/* construct packet */
-
-	//login type
-	memcpy(payload+pos, &loginPacketHeader.loginType, 1);
-	pos += 1;
-
-	//previous gr id
-	memcpy(payload+pos, &loginPacketHeader.previousGRID, sizeof(wxUint32));
-	pos += sizeof(wxUint32);
-
-	//mac address
-	memcpy(payload+pos, &loginPacketHeader.macAddress, 6); 
-	pos += 6;
-
-	//lan ip
-	memcpy(payload+pos, &ip, 4);
-	pos += 4;
-
-	//checksum
-	memcpy(payload+pos, &loginPacketHeader.checksum, sizeof(wxUint32));
-	pos += sizeof(wxUint32);
-	
-	//password 
-	temp[0] = (wxUint8)strlen(GRpassword);
-	memcpy(payload+pos, temp, 1);
-	pos++;
-	memcpy(payload+pos, GRpassword, strlen(GRpassword));
-	pos += strlen(GRpassword);
-
-	if(emailLogin == true) {
-		//email
-		temp[0] = (wxUint8)strlen(GRemail);
-		memcpy(payload+pos, temp, 1);
-		pos++;
-		memcpy(payload+pos, GRemail, strlen(GRemail));
-		pos += strlen(GRemail);
-	}
-	else {
-		//gr id
-		memcpy(payload+pos, &GRID, sizeof(wxUint32));
-		pos += sizeof(wxUint32);
-	}
-
-	//options
-	memcpy(payload+pos, options, 16);
-	pos += 16;
-
-	//games list
-	if(*currentProfile->gamesList == 0)
-	{
-		//do nothing
-	}
-	else
-	{
-		*currentProfile->gamesList = *currentProfile->gamesList + 1;
-		memcpy(payload+pos, currentProfile->gamesList, *(currentProfile->gamesList));
-		pos += *(currentProfile->gamesList);
-		*currentProfile->gamesList = *currentProfile->gamesList - 1;
-	}
-
-	//location
-	memcpy(payload+pos, location, 12);
-	pos += 12;
-
-	//unknown static buf
-	memcpy(payload+pos, staticBuf, 7);
-	pos += 7;
-
-	//plugins
-	memcpy(payload+pos, plgList, ((Plugins.size()-2)*6)+2);
-	pos += ((Plugins.size()-2)*6)+2;
-
-	//from last packet, copy to end
-	memcpy(payload+pos, Packet->payload, 4);
-	pos += 4;
-
-	//logWindow->logData(payload, pos);
-
-	sendGRPacket(LOGIN_TO_GAMERANGER, pos, payload);
-
-	delete[] plgList;
-	delete[] payload;
-}
-//-----------------------------------------------------------------------------
 wxString GRMainWindow::bufToStr(wxUint8 *text)
 {
 	wxUint32 x;
@@ -1279,41 +847,6 @@ wxString GRMainWindow::bufToStr(wxUint8 *text)
 
 	return szNew;
 }
-//-----------------------------------------------------------------------
-void GRMainWindow::testPacket(wxString filename)
-{
-	wxFile *file = new wxFile();
-	GR_PACKET_HEADER header;
-	GR_PACKET packet;
-	wxUint8 *buf;
-	wxUint32 len;
-
-	if(!file->Exists(filename)) 
-	{
-		delete(file);
-		return;
-	}
-
-	file->Open(filename, wxFile::read);
-
-	len = file->Length();
-	buf = new wxUint8[len];
-
-	file->Read(buf, (wxUint32)len);
-
-	memcpy(&header, buf, sizeof(GR_PACKET_HEADER));
-	header.command = ntohl(header.command);
-	header.payloadLength = ntohl(header.payloadLength);
-
-	packet.header = &header;
-	packet.payload = (wxUint8*)buf+sizeof(GR_PACKET_HEADER);
-
-	handlePacket(&packet);
-
-	file->Close();
-	delete[] buf;
-	delete(file);
-}
 //-------------------------------------------------------------------------
 GRLobby *GRMainWindow::findLobby(wxUint32 lobbyID)
 {
@@ -1325,57 +858,13 @@ GRLobby *GRMainWindow::findLobby(wxUint32 lobbyID)
 	return NULL;
 }
 //------------------------------------------------------------------------
-void GRMainWindow::loadPlugins()
-{
-	wxDir dir;
-	wxString filename;
-	GRPlugin *plugin;
-
-	if(!dir.Exists(wxGetCwd()+wxT("/plugins"))) return;
-
-	dir.Open(wxGetCwd()+wxT("/plugins"));
-
-	if(!dir.IsOpened()) 
-	{
-		logWindow->logText(wxT("Unable to open plugins directory."));
-		return;
-	}
-
-	bool cont = dir.GetFirst(&filename, wxT(""), wxDIR_FILES);
-	while(cont)
-	{
-		plugin = new GRPlugin();
-		plugin->colorTable = colorTable;
-		plugin->LoadFromFile(wxGetCwd()+wxT("/plugins/")+filename);
-		//logWindow->logText(plugin->gameName);
-		plugin->imageIndex = imgList->Add(*plugin->image);
-		Plugins.push_back(plugin);
-		cont = dir.GetNext(&filename);
-	}
-	//add chat plugin
-	plugin = new GRPlugin();
-	plugin->gameCode = 0;
-	plugin->gameName = wxT("Chat");
-	Plugins.push_back(plugin);
-	
-	//add default if we don't have it
-	plugin = new GRPlugin();
-	plugin->gameCode = 0xffffffff;
-	plugin->gameName = wxT("Unknown Game");
-	Plugins.push_back(plugin);
-
-	/* sort these bad boys */
-	sort(Plugins.begin(), Plugins.end());
-
-}
-//-------------------------------------------------------------------------
 void GRMainWindow::addGameRoom(wxUint32 gameRoomID, wxUint32 gameCode, wxUint32 maxPlayers, wxUint32 currentPlayers, wxString ip, wxUint8 locked, wxString description, wxUint32 grID, wxUint32 iconID, wxUint32 status, wxString host, bool announce)
 {
 	int index;
 	GRGameRoom *room;
 	GRPlugin *plugin;
 	wxString str;
-	plugin = findPluginByCode(gameCode);
+	plugin = pluginManager->findPluginByCode(gameCode);
 	index = gameRoomList->InsertItem(userListBox->GetItemCount(), plugin->gameName, plugin->imageIndex);
 	gameRoomList->SetItem(index, 1, host, -1);
 	gameRoomList->SetItem(index, 2, description);
@@ -1462,144 +951,6 @@ void GRMainWindow::addGameRoom(wxUint32 gameRoomID, wxUint32 gameCode, wxUint32 
 	}
 }
 //-----------------------------------------------------------------------------
-GRPlugin *GRMainWindow::findPluginByCode(wxUint32 gameCode)
-{
-	wxUint32 x;
-	GRPlugin *defaultPlugin = NULL;
-	for(x = 0; x < Plugins.size(); x++)
-	{
-		if(Plugins[x]->gameCode == gameCode) return Plugins[x];
-		if(Plugins[x]->gameCode == 0xffffffff) defaultPlugin = Plugins[x];
-	}
-	if(defaultPlugin == NULL) 
-		logWindow->logText(wxT("Couldn't find plugin for gamecode: ")+wxString::Format(wxT("%d\n"), gameCode));
-	return defaultPlugin;
-}
-//----------------------------------------------------------------------------
-void GRMainWindow::loadColorProfile()
-{
-	wxFile file;
-	wxUint32 size;
-
-	colorTable = NULL;
-	if(!file.Exists(wxT("macos.act"))) return;
-
-	file.Open(wxT("macos.act"), wxFile::read);
-	if(!file.IsOpened()) return;
-
-	size = file.Length();
-
-	colorTable = new wxUint8[size];
-	if(colorTable == NULL) return;
-
-	file.Read(colorTable, size);
-	file.Close();
-	logWindow->logText(wxT("Loaded color profile."));
-}
-//---------------------------------------------------------------------------
-void GRMainWindow::gameRoomOpened(GR_PACKET *Packet)
-{
-	wxUint8 *buf;
-	wxUint32 grID, iconID;
-	wxUint8 status, locked;
-	wxString ip, description, nick;
-	GR_GAME_ROOM_PACKET *roomHeader;
-
-	buf = Packet->payload;
-
-
-		roomHeader = (GR_GAME_ROOM_PACKET*)buf;
-
-		//endianess
-		roomHeader->currentPlayers = ntohl(roomHeader->currentPlayers);
-		roomHeader->maxPlayers = ntohl(roomHeader->maxPlayers);
-		roomHeader->gameRoomID = ntohl(roomHeader->gameRoomID);
-		roomHeader->gameCode = ntohl(roomHeader->gameCode);
-
-		ip = wxString::Format(wxT("%d.%d.%d.%d"), roomHeader->ipAddress[0] ^ 0xFF, roomHeader->ipAddress[1] ^ 0xFF, roomHeader->ipAddress[2] ^ 0xFF, roomHeader->ipAddress[3] ^ 0xFF);
-
-		buf += sizeof(GR_GAME_ROOM_PACKET);
-
-		//locked
-		locked = *buf;
-		buf++;
-
-		//description
-		description = bufToStr(buf);
-		buf += description.Len() + 1;
-
-		//gr id
-		memcpy(&grID, buf, sizeof(wxUint32));
-		grID = ntohl(grID);
-		buf += sizeof(wxUint32);
-
-		//icon id
-		memcpy(&iconID, buf, sizeof(wxUint32));
-		iconID = ntohl(iconID);
-		buf += sizeof(wxUint32);
-
-		//status
-		status = *buf;
-		buf++;
-
-		//nick
-		nick = bufToStr(buf);
-		buf += nick.Len() + 1;
-
-		//game room list?
-		buf += *(buf)+1;
-
-		addGameRoom(roomHeader->gameRoomID, roomHeader->gameCode, roomHeader->maxPlayers,
-			roomHeader->currentPlayers, ip, locked, description, grID, iconID,
-			status, nick, true);
-		
-}
-//---------------------------------------------------------------------------
-void GRMainWindow::gameRoomClosed(GR_PACKET *Packet)
-{
-	GRGameRoom *room = NULL;
-	vector<GRGameRoom*>::iterator it;
-	wxUint32 roomID;
-	wxUint32 x;
-	wxInt32 index;
-	wxString str;
-
-	memcpy(&roomID, Packet->payload, sizeof(wxUint32));
-	roomID = ntohl(roomID);
-
-	for(x = 0; x < GameRooms.size(); x++)
-	{
-		room = GameRooms[x];
-		if(room->gameRoomID == roomID) 
-		{
-			index = getGameItemIndex(room);
-			if(index == -1)
-			{
-				delete(room);
-				return;
-			}
-			gameRoomList->DeleteItem(index);
-			str = wxT("<< ") + room->host + wxT(" has closed a ") + room->Plugin->gameName + wxT(" room >>");
-			addTextWithColor(str+wxT("\n"), *wxRED);
-
-			/* check if it's our current game room */
-			if(currentGameRoom != NULL) {
-				if(currentGameRoom->gameRoom->gameRoomID == roomID) {
-					currentGameRoom->addTextWithColor(wxT("<< The room has been closed >>\n"), *wxRED);
-					currentGameRoom->userListBox->ClearAll();
-					currentGameRoom = NULL;
-					currentRoomID = 0;
-				}
-			}
-
-			it = GameRooms.begin()+x;
-			GameRooms.erase(it);
-			delete(room);
-			return;
-		}	
-	}
-}
-//----------------------------------------------------------------------------
 void GRMainWindow::setListInfo(GRUser *User)
 {
 	wxListItem info;
@@ -1626,25 +977,15 @@ void GRMainWindow::setListInfo(GRUser *User)
 //---------------------------------------------------------------------------
 void GRMainWindow::OnComboBoxSelect(wxCommandEvent &event)
 {
-	wxUint32  x;
 	wxInt32 index;
+	GRLobby *lobby;
 
 	index = lobbyComboBox->GetSelection();
 	
 	if(index == -1) return;
-
-	if(index == lastIndex) return;
-
-	for(x = 0; x < Lobbies.size(); x++)
-	{
-		if(Lobbies[x]->comboIndex == index) 
-		{
-			joinLobby(Lobbies[x]);
-			lastIndex = index;
-			return;
-		}
-	}
-
+	
+	lobby = (GRLobby*)lobbyComboBox->GetClientData(index);
+	if(lobby != NULL) lobby->joinLobby();
 }
 //--------------------------------------------------------------------------
 void GRMainWindow::joinLobby(GRLobby *lobby)
@@ -1720,11 +1061,15 @@ bool GRMainWindow::writeCounter(wxUint32 command)
 //-----------------------------------------------------------------------------
 void GRMainWindow::OnChatEditEnter(wxCommandEvent &event)
 {
-	if(chatEditField->GetValue().Len() == 0) return;
-	if(currentProfile == NULL) return;
-	sendGRPacket(SEND_LOBBY_CHAT_MESSAGE, chatEditField->GetValue().Len()+1, (wxUint8*)(const char*)chatEditField->GetValue().mb_str());
+	GRUser *user;
 
-	addTextWithColor(myNickname, *wxRED);
+	if(chatEditField->GetValue().Len() == 0) return;
+	user = GRApplication::getInstance()->getMainConnection()->getLobbyManager()->getCurrentLobby()->findUser(GRApplication::getInstance()->getMainConnection()->getProfile()->grID);
+	if(user == NULL) return;
+		
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(SEND_LOBBY_CHAT_MESSAGE, chatEditField->GetValue().Len()+1, (wxUint8*)(const char*)chatEditField->GetValue().mb_str());
+
+	addTextWithColor(user->nick, *wxRED);
 	addTextWithColor(wxT(": ") + chatEditField->GetValue() + wxT("\n"), *wxBLACK);
 
 	chatEditField->SetValue(wxT(""));
@@ -1732,23 +1077,10 @@ void GRMainWindow::OnChatEditEnter(wxCommandEvent &event)
 //-----------------------------------------------------------------------------
 void GRMainWindow::OnLoginMenu(wxCommandEvent &event)
 {
-	//there is already a login window open
-	if(loginWindow != NULL) 
-	{
-		if(loginWindow->IsShown() == true)
-		{
-			loginWindow->Show(true);
-			loginWindow->SetFocus();
-			return;
-		}
-	}
-		
-	//Login Window
-	loginWindow = new GRLoginWindow(this, wxT("Login to GameRanger"), wxDefaultPosition,
-			wxSize(200, 200));
-	loginWindow->mainWindow = this;
+	GRLoginWindow *loginWindow = GRLoginWindow::getInstance(this);
+	loginWindow->populateProfilesList();
 	loginWindow->Show(true);
-
+	loginWindow->SetFocus();
 }
 //---------------------------------------------------------------------------
 void GRMainWindow::OnRegisterMenu(wxCommandEvent &event)
@@ -1768,28 +1100,6 @@ void GRMainWindow::OnAboutMenu(wxCommandEvent &event)
 		wxT("This application was created by xoclipse. It is released under the GPL. For more information, visit http://sourceforge.net/projects/gameranger/"), wxT("About Gameranger"), wxOK);
 	msgDlg->ShowModal();
 	delete(msgDlg);
-}
-//--------------------------------------------------------------------------------
-void GRMainWindow::playerJoinedGameRoom(GR_PACKET *Packet)
-{
-	wxUint32 gameRoomID;
-	wxUint8 *ptr;
-	GRGameRoom *gameRoom;
-	
-	ptr = Packet->payload;
-
-	memcpy(&gameRoomID, ptr, sizeof(wxUint32));
-	gameRoomID = ntohl(gameRoomID);
-
-	gameRoom = findGameRoom(gameRoomID);
-	if(gameRoom == NULL) 
-	{
-		logWindow->logText(wxT("Unable to find game room, ID: ")+wxString::Format(wxT("%d\n"), gameRoomID));
-		return;
-	}
-
-	gameRoom->currentPlayers++;
-	updateGameRoomPlayerCountString(gameRoom);
 }
 //--------------------------------------------------------------------------------
 GRGameRoom *GRMainWindow::findGameRoom(wxUint32 id)
@@ -1832,113 +1142,6 @@ void GRMainWindow::playerLeftGameRoom(GR_PACKET *Packet)
 	updateGameRoomPlayerCountString(gameRoom);
 }
 //--------------------------------------------------------------------------------
-void GRMainWindow::requestMissingIconsFromUserList(wxUint32 count)
-{
-	wxUint32 missingCount = 0, len = 0, pos = 0, x;
-	wxUint32 iconID;
-	wxUint8 *buf;
-
-	//If we don't need any icons, no point in sending it
-	if(count == 0) return;
-
-	len = sizeof(wxUint32) + (sizeof(wxUint32)*count);
-
-	buf = new wxUint8[len];
-
-	missingCount = count;
-	missingCount = htonl(missingCount);
-
-	memcpy(buf, (wxUint8*)&missingCount, sizeof(wxUint32));
-	pos += sizeof(wxUint32);
-
-	for(x = 0; x < currentLobby->Users.size(); x++)
-	{
-		if(currentLobby->Users[x]->icon == NULL && currentLobby->Users[x]->iconID != 0) //we don't have this icon
-		{	
-			iconID = currentLobby->Users[x]->iconID;
-			iconID = htonl(iconID);
-			memcpy(buf+pos, (wxUint8*)&iconID, sizeof(wxUint32));
-			pos += sizeof(wxUint32);
-		}
-	}
-
-	sendGRPacket(REQUEST_ICON_DATA, len, buf);
-	delete[] buf;
-}
-//------------------------------------------------------------------------------
-void GRMainWindow::receivedIconData(GR_PACKET *Packet)
-{
-	wxUint32 count, x, iconID;
-	wxUint8 *ptr;
-	GRIcon *icon;
-
-	ptr = Packet->payload;
-	
-	memcpy(&count, ptr, sizeof(wxUint32));
-	count = ntohl(count);
-	ptr += sizeof(wxUint32);
-
-	for(x = 0; x < count; x++)
-	{
-		memcpy(&iconID, ptr, sizeof(wxUint32));
-		iconID = ntohl(iconID);
-		ptr += sizeof(wxUint32);
-	
-		icon = new GRIcon();
-		icon->colorTable = colorTable;
-		icon->SetIconID(iconID);
-		icon->SetIconData(ptr);
-		icon->imageIndex = iconImgList->Add(*icon->image);
-		iconCache->AddIcon(icon);
-
-		ptr += 288;
-	}
-	purgeIcons();
-}
-//-----------------------------------------------------------------------------
-void GRMainWindow::purgeIcons()
-{
-	wxUint32 x;
-	wxInt32 index;
-	GRUser *user;
-
-	/* update in lobby */
-	for(x = 0; x < currentLobby->Users.size(); x++)
-	{
-		user = currentLobby->Users[x];
-		if(user->icon == NULL && user->iconID != 0) 
-		{
-			user->icon = iconCache->findIcon(user->iconID);
-			if(user->icon != NULL) 
-			{
-				index = getUserItemIndex(user);
-				if(index != -1) 
-				{
-					userListBox->SetItemImage(index, user->icon->imageIndex, user->icon->imageIndex);
-				}
-			}
-		}
-	}
-
-	/* update in gameroom if we are in one */
-	if(currentGameRoom != NULL) {
-		for(x = 0; x < currentGameRoom->users.size(); x++) {
-			user = currentGameRoom->users[x];
-
-			if(user->icon == NULL && user->iconID != 0) {
-				user->icon = iconCache->findIcon(user->iconID);
-				if(user->icon != NULL) {
-					index = currentGameRoom->getUserItemIndex(user);
-					if(index != -1) {
-						currentGameRoom->userListBox->SetItemImage(index, user->icon->imageIndex, user->icon->imageIndex);
-					}
-				}
-			}
-		}
-	}
-
-}
-//------------------------------------------------------------------------------
 wxInt32 GRMainWindow::getUserItemIndex(GRUser *user)
 {
 	wxInt32 x;
@@ -1948,7 +1151,7 @@ wxInt32 GRMainWindow::getUserItemIndex(GRUser *user)
 		temp = (GRUser*)userListBox->GetItemData(x);
 		if(user == temp) return x;
 	}
-	logWindow->logText(wxString::Format(wxT("---Error: Couldnt' find list item for User ID: %d"), user->userID));
+	GRLogger::getInstance()->log(GRLogger::LOG_WARNING, wxString::Format(wxT("---Error: Couldnt' find list item for User ID: %d"), user->userID));
 	return -1;
 }
 //-----------------------------------------------------------------------------
@@ -1961,7 +1164,7 @@ wxInt32 GRMainWindow::getGameItemIndex(GRGameRoom *room)
 		temp = (GRGameRoom*)gameRoomList->GetItemData(x);
 		if(room == temp) return x;
 	}
-	logWindow->logText(wxString::Format(wxT("---Error: Couldnt' find list item for game with id: %d"), room->gameRoomID));
+	GRLogger::getInstance()->log(GRLogger::LOG_WARNING, wxString::Format(wxT("---Error: Couldnt' find list item for game with id: %d"), room->gameRoomID));
 	return -1;
 }
 //-----------------------------------------------------------------------------
@@ -1984,30 +1187,6 @@ int wxCALLBACK wxListCompareFunction(long item1, long item2, long sortData)
 	return 0;
 }
 //-----------------------------------------------------------------------------
-void GRMainWindow::requestIcon(wxUint32 iconID)
-{
-	wxUint32 len = 0, pos = 0, count;
-	wxUint8 *buf;
-
-	count = 1;
-	count = htonl(count);
-
-
-	len = sizeof(wxUint32)*2;
-
-	buf = new wxUint8[len];
-
-	memcpy(buf, (wxUint8*)&count, sizeof(wxUint32));
-	pos += sizeof(wxUint32);
-
-	iconID = htonl(iconID);
-	memcpy(buf+pos, (wxUint8*)&iconID, sizeof(wxUint32));
-	pos += sizeof(wxUint32);
-
-	sendGRPacket(REQUEST_ICON_DATA, len, buf);
-	delete[] buf;
-}
-//------------------------------------------------------------------------------
 void GRMainWindow::OnUserDoubleClick(wxListEvent& event)
 {
 	if(event.GetIndex() == -1) return;
@@ -2085,7 +1264,7 @@ void GRMainWindow::receivedPrivateMessage(GR_PACKET *Packet)
 	pm->chatEditField->SetFocus();
     privateMessages.push_back(pm);
 }
-//-----------------------------------------------------------------------------
+/*-----------------------------------------------------------------------------*/
 void GRMainWindow::OnGameRoomDoubleClick(wxListEvent& event)
 {
 	if(event.GetIndex() == -1) return;
@@ -2128,7 +1307,7 @@ void GRMainWindow::OnGameRoomDoubleClick(wxListEvent& event)
 		memcpy(payload+sizeof(wxUint32), null, 1);
 	}
 
-	sendGRPacket(JOIN_GAME_ROOM, len, payload);
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(JOIN_GAME_ROOM, len, payload);
 	delete[] payload;
 }
 //---------------------------------------------------------------------------
@@ -2301,7 +1480,7 @@ void GRMainWindow::OnChangeNickMenu(wxCommandEvent &event)
 		return;
 	}
 
-	sendGRPacket(CHANGE_NICKNAME, nickname.Len()+1, (wxUint8*)(const char*)nickname.mb_str());
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(CHANGE_NICKNAME, nickname.Len()+1, (wxUint8*)(const char*)nickname.mb_str());
 }
 //--------------------------------------------------------------------------------
 void GRMainWindow::OnChangeNameMenu(wxCommandEvent &event)
@@ -2327,14 +1506,12 @@ void GRMainWindow::OnChangeNameMenu(wxCommandEvent &event)
 		return;
 	}
 
-	sendGRPacket(CHANGE_REAL_NAME, name.Len()+1, (wxUint8*)(const char*)name.mb_str());
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(CHANGE_REAL_NAME, name.Len()+1, (wxUint8*)(const char*)name.mb_str());
 }
 //--------------------------------------------------------------------------------
 void GRMainWindow::MenuLogout(wxCommandEvent &event)
 {
-	m_socket->Close();
-	delete(m_socket);
-	m_socket = NULL;
+	GRApplication::getInstance()->closeMainConnection();
 	OnDisconnect();
 }
 //---------------------------------------------------------------------------------
@@ -2369,7 +1546,7 @@ void GRMainWindow::OnChangePassword(wxCommandEvent &event)
 	strcpy((char*)payload, GRpassword);
 	strcpy((char*)payload+strlen(GRpassword)+1,(const char*)password.mb_str());
 
-	sendGRPacket(CHANGE_ACCOUNT_PASSWORD, len, payload);
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(CHANGE_ACCOUNT_PASSWORD, len, payload);
 	delete[] payload;
 }
 //--------------------------------------------------------------------------------
@@ -2434,193 +1611,9 @@ void GRMainWindow::OnUserListGetInfo(wxCommandEvent &event)
 	userID = user->userID;
 
 	userID = wxUINT32_SWAP_ON_LE(userID);
-	sendGRPacket(GET_USER_INFO, sizeof(wxUint32), (wxUint8*)&userID);
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(GET_USER_INFO, sizeof(wxUint32), (wxUint8*)&userID);
 }
-//----------------------------------------------------------------------------------
-void GRMainWindow::regularUserInfo(GR_PACKET *Packet)
-{
-	wxUint32 roomID;
-	wxString nickname, realName, email;
-	wxUint8 *ptr;
-	GR_USER_INFO_HEADER infoHeader;
-	GRUserInfo *userInfo;
-	GRUserInfoWindow *infoWindow;
-
-	ptr = Packet->payload;
-
-	//user info header
-	memcpy(&infoHeader, ptr, sizeof(infoHeader));
-	ptr += 32; //sizeof(GR_USER_INFO_HEADER)
-
-	infoHeader.iconID = wxUINT32_SWAP_ON_LE(infoHeader.iconID);
-	infoHeader.idleSince = wxUINT32_SWAP_ON_LE(infoHeader.idleSince);
-	infoHeader.lastLogin = wxUINT32_SWAP_ON_LE(infoHeader.lastLogin);
-	infoHeader.lastLogout = wxUINT32_SWAP_ON_LE(infoHeader.lastLogout);
-	infoHeader.userID = wxUINT32_SWAP_ON_LE(infoHeader.userID);
-
-	//nickname
-	nickname = bufToStr(ptr);
-	ptr += nickname.Len() + 1;
-
-	//real name
-	realName = bufToStr(ptr);
-	ptr += realName.Len() + 1;
-
-	//email
-	email = bufToStr(ptr);
-	ptr += email.Len() + 1;
-
-	//unknown 
-	ptr += 12;
-
-	//current room id
-	memcpy(&roomID, ptr, sizeof(wxUint32));
-	roomID = wxUINT32_SWAP_ON_LE(roomID);
-
-	userInfo = new GRUserInfo(nickname, realName, infoHeader.userID, infoHeader.lastLogin, infoHeader.lastLogout,
-		infoHeader.idleSince, infoHeader.iconID, roomID, infoHeader.location, findLobby(roomID), iconCache->findIcon(infoHeader.iconID), email);
-
-	if(roomWantedInfo && currentGameRoom != NULL) {
-		infoWindow = new GRUserInfoWindow(currentGameRoom, wxT("User Info - ")+nickname, wxDefaultPosition, wxDefaultSize);
-		roomWantedInfo = false;
-	}
-	else {
-		infoWindow = new GRUserInfoWindow(this, wxT("User Info - ")+nickname, wxDefaultPosition, wxDefaultSize);
-	}
-
-	infoWindow->SetInfo(userInfo);
-	infoWindow->Show(true);
-
-}
-//-----------------------------------------------------------------------------------
-void GRMainWindow::premiumUserInfo(GR_PACKET *Packet)
-{
-	wxUint32 roomID, pictureID, memberSince;
-	wxString nickname, realName, email, accountName, webSite, quote;
-	wxUint16 favGame;
-	wxUint8 *ptr;
-	GR_USER_INFO_HEADER infoHeader;
-	GRPremiumUserInfo *userInfo;
-	GRPremiumUserInfoWindow *infoWindow;
-
-	ptr = Packet->payload;
-
-	//user info header
-	memcpy(&infoHeader, ptr, sizeof(infoHeader));
-	ptr += 32; //sizeof(GR_USER_INFO_HEADER)
-
-	infoHeader.iconID = wxUINT32_SWAP_ON_LE(infoHeader.iconID);
-	infoHeader.idleSince = wxUINT32_SWAP_ON_LE(infoHeader.idleSince);
-	infoHeader.lastLogin = wxUINT32_SWAP_ON_LE(infoHeader.lastLogin);
-	infoHeader.lastLogout = wxUINT32_SWAP_ON_LE(infoHeader.lastLogout);
-	infoHeader.userID = wxUINT32_SWAP_ON_LE(infoHeader.userID);
-
-	//nickname
-	nickname = bufToStr(ptr);
-	ptr += nickname.Len() + 1;
-
-	//real name
-	realName = bufToStr(ptr);
-	ptr += realName.Len() + 1;
-
-	//email
-	email = bufToStr(ptr);
-	ptr += email.Len() + 1;
-
-	//unknown 
-	ptr += 12;
-
-	//current room id
-	memcpy(&roomID, ptr, sizeof(wxUint32));
-	roomID = wxUINT32_SWAP_ON_LE(roomID);
-	ptr += sizeof(wxUint32);
-
-	//account name
-	accountName = bufToStr(ptr);
-	ptr += accountName.Len() + 1;
-
-	//member since
-	memcpy(&memberSince, ptr, sizeof(wxUint32));
-	memberSince = wxUINT32_SWAP_ON_LE(memberSince);
-	ptr += sizeof(wxUint32);
-
-	//webpage
-	webSite = bufToStr(ptr);
-	ptr += webSite.Len() + 1;
-
-	//quote
-	quote = bufToStr(ptr);
-	ptr += quote.Len() + 1;
-
-	//fav game
-	memcpy(&favGame, ptr, sizeof(wxUint16));
-	favGame = wxUINT16_SWAP_ON_LE(favGame);
-	ptr += sizeof(wxUint16);
-
-	//picture id
-	memcpy(&pictureID, ptr, sizeof(wxUint32));
-	pictureID = wxUINT32_SWAP_ON_LE(pictureID);
-	ptr += sizeof(wxUint32);
-
-	/*
-	account name(char*)
-	member since(uint32)
-webpage(char*)
-quote(char*)
-fav game(uint16)
-picture id(uint32)*/
-
-	userInfo = new GRPremiumUserInfo(nickname, realName, infoHeader.userID, infoHeader.lastLogin, infoHeader.lastLogout,
-		infoHeader.idleSince, infoHeader.iconID, roomID, infoHeader.location, findLobby(roomID), iconCache->findIcon(infoHeader.iconID), email,
-		accountName, webSite, quote, memberSince, pictureID, findPluginByCode(favGame));
-
-	logWindow->logText(accountName+wxT(" ")+findPluginByCode(favGame)->gameName);
-	requestPicture(pictureID);
-	if(roomWantedInfo && currentGameRoom != NULL) {
-		infoWindow = new GRPremiumUserInfoWindow(currentGameRoom, wxT("User Info - ")+nickname, wxDefaultPosition, wxDefaultSize);
-		roomWantedInfo = false;
-	}
-	else {
-		infoWindow = new GRPremiumUserInfoWindow(this, wxT("User Info - ")+nickname, wxDefaultPosition, wxDefaultSize);
-	}
-
-	infoWindow->m_mainWindow = this;
-	infoWindow->SetInfo(userInfo);
-	infoWindow->Show(true);
-	currentPremiumInfoWindow = infoWindow;
-
-}
-//-----------------------------------------------------------------------------------
-void GRMainWindow::requestPicture(wxUint32 pictureID)
-{
-	wxUint32 picture;
-
-	picture = pictureID;
-	picture = wxUINT32_SWAP_ON_LE(picture);
-
-	sendGRPacket(GET_PREMIUM_USER_IMAGE, sizeof(wxUint32), (wxUint8*)&picture);
-}
-//-----------------------------------------------------------------------------------
-void GRMainWindow::recvPremiumUserImage(GR_PACKET *Packet)
-{
-	wxUint8 *ptr;
-	wxImage *img = new wxImage();
-	wxMemoryInputStream *buf;
-
-	ptr = Packet->payload + sizeof(wxUint32);
-
-	buf = new wxMemoryInputStream(ptr,Packet->header->payloadLength - sizeof(wxUint32));
-	img->LoadFile(*buf);
-
-	if(currentPremiumInfoWindow != NULL)
-	{	
-		currentPremiumInfoWindow->SetImage(img);
-	}	
-
-	delete(buf);
-	delete(img);
-}
-//-----------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------
 void GRMainWindow::OnChangeIconMenu(wxCommandEvent &event)
 {
 	GRChangeIconWindow *changeIcon = new GRChangeIconWindow(this, wxT("Change icon"), wxDefaultPosition, wxDefaultSize);
@@ -2628,59 +1621,13 @@ void GRMainWindow::OnChangeIconMenu(wxCommandEvent &event)
 	changeIcon->Show(true);
 }
 //-----------------------------------------------------------------------------------
-void GRMainWindow::userChangedIcon(GR_PACKET *Packet)
-{
-	GR_USER_CHANGED_ICON_PACKET *pck;
-	GRIcon *icon;
-	GRUser *user;
-	int imageIndex;
-	pck = (GR_USER_CHANGED_ICON_PACKET*)Packet->payload;
-
-	pck->userID = wxUINT32_SWAP_ON_LE(pck->userID);
-	pck->iconID = wxUINT32_SWAP_ON_LE(pck->iconID);
-	
-	if(currentLobby == NULL) return;
-	user = currentLobby->findUser(pck->userID);
-	user->iconID = pck->iconID;
-
-	icon = iconCache->findIcon(pck->iconID);
-	user->icon = icon;
-	if(icon == NULL) 
-	{
-		imageIndex = 0;
-		if(pck->iconID != 0)requestIcon(pck->iconID);
-	}
-	else 
-	{
-		imageIndex = icon->imageIndex;
-		userListBox->SetItemImage(getUserItemIndex(user), user->icon->imageIndex, user->icon->imageIndex);
-	}
-
-}
-//-------------------------------------------------------------------------------
 void GRMainWindow::OnFindPlayerMenu(wxCommandEvent &event)
 {
-	if(searchWindow != NULL)
-	{
-		searchWindow->SetFocus();
-		return;
-	}
-	GRFindPlayerWindow *findPlayer = new GRFindPlayerWindow(this, wxT("Find user"), wxDefaultPosition, wxDefaultSize);
-	searchWindow = findPlayer;
-	findPlayer->m_mainWindow = this;
+	GRFindPlayerWindow *findPlayer = GRFindPlayerWindow::getInstance(this);
 	findPlayer->Show(true);
+	findPlayer->SetFocus();
 }
 //-----------------------------------------------------------------------------------
-void GRMainWindow::findUserResults(GR_PACKET *Packet)
-{
-	if(searchWindow == NULL) //disregard this
-	{
-		return;
-	}
-
-	searchWindow->findUserResults(Packet);
-}
-//----------------------------------------------------------------------------------
 wxUint8 *GRMainWindow::makePluginsList()
 {
 	wxUint32 len = 0, pluginCount = 0;
@@ -2808,21 +1755,21 @@ void GRMainWindow::parseGamesListForUser(GRUser *user, wxUint8 *buf)
 	for(x = 0; x < count; x++)
 	{
 		if((*ptr & 1) == 1) 
-			user->addGameToList(findPluginByCode(offset));
+			user->addGameToList(pluginManager->findPluginByCode(offset));
 		if((*ptr & 2) == 2)
-			user->addGameToList(findPluginByCode(offset+1));
+			user->addGameToList(pluginManager->findPluginByCode(offset+1));
 		if((*ptr & 4) == 4)
-			user->addGameToList(findPluginByCode(offset+2));
+			user->addGameToList(pluginManager->findPluginByCode(offset+2));
 		if((*ptr & 8) == 8)
-			user->addGameToList(findPluginByCode(offset+3));
+			user->addGameToList(pluginManager->findPluginByCode(offset+3));
 		if((*ptr & 16) == 16)
-			user->addGameToList(findPluginByCode(offset+4));
+			user->addGameToList(pluginManager->findPluginByCode(offset+4));
 		if((*ptr & 32) == 32)
-			user->addGameToList(findPluginByCode(offset+5));
+			user->addGameToList(pluginManager->findPluginByCode(offset+5));
 		if((*ptr & 64) == 64)
-			user->addGameToList(findPluginByCode(offset+6));
+			user->addGameToList(pluginManager->findPluginByCode(offset+6));
 		if((*ptr & 128) == 128)
-			user->addGameToList(findPluginByCode(offset+7));
+			user->addGameToList(pluginManager->findPluginByCode(offset+7));
 
 		offset += 8;
 		ptr++;
@@ -2940,57 +1887,10 @@ void GRMainWindow::makeGameListMenu(wxListCtrl *list, wxMenu *gameMenu, int inde
 void GRMainWindow::OnChangeMyGamesMenu(wxCommandEvent &event)
 {
 	GRChangeMyGames *changeGames = new GRChangeMyGames(this, wxT("My Games"), wxDefaultPosition, wxDefaultSize);
-	changeGames->m_mainWindow = this;
 	changeGames->populateListBox();
 	changeGames->Show(true);
 }
 //----------------------------------------------------------------------------------
-void GRMainWindow::gameRoomStatusChanged(GR_PACKET *Packet)
-{
-	GR_ROOM_STATUS_CHANGED *pck;
-	GRGameRoom *room = NULL;
-	wxInt32 index;
-	int x;
-
-	pck = (GR_ROOM_STATUS_CHANGED*)Packet->payload;
-
-	//endian conversion
-	pck->roomID = wxUINT32_SWAP_ON_LE(pck->roomID);
-	pck->status = wxUINT32_SWAP_ON_LE(pck->status);
-
-	//find game room
-	for(x = 0; x < GameRooms.size(); x++)
-	{
-		if(GameRooms[x]->gameRoomID == pck->roomID)
-		{
-			room = GameRooms[x];
-			break;
-		}
-	}
-
-	//if we couldn't find this game room, let's exit
-	if(room == NULL) return;
-
-	//get list item
-	index = getGameItemIndex(room);
-	if(index == -1) return;
-
-	//update game room and list item
-	if(pck->status == 0) {
-		room->status -= 8;
-	}
-	else {
-		room->status += 8;
-	}
-	
-
-
-
-	//update list item
-	setGameRoomListInfo(room);
-
-}
-//------------------------------------------------------------------------------------
 void GRMainWindow::setGameRoomListInfo(GRGameRoom *gameRoom)
 {
 	wxListItem info;
@@ -3028,6 +1928,15 @@ void GRMainWindow::setGameRoomListInfo(GRGameRoom *gameRoom)
 	}
 	else {
 		gameRoomList->SetItem(index, 5, wxT(""), -1);
+	}
+	/* If room is locked */
+	if(gameRoom->isLocked())
+	{
+		#ifdef WIN32 //windows won't show subitem images correctly, so just display text
+		gameRoomList->SetItem(index, 6, wxT("Yes"), -1);
+		#else
+		gameRoomList->SetItem(index, 6, wxT(""), 1);
+		#endif
 	}
 
 }

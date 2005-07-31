@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "GRChangeIconWindow.h"
 #include "GRMainWindow.h"
+#include "GRApplication.h"
+#include "GRMainConnection.h"
 #include "GRIcon.h"
 #include "GRLogWindow.h"
 #include "memdebug.h"
@@ -148,7 +150,7 @@ void GRChangeIconWindow::OnChangeIcon(wxCommandEvent &event)
 	memcpy(payload+sizeof(wxUint32), iconData, 256);
 	memcpy(payload+sizeof(wxUint32)+256, padding, 32);
 
-	m_mainWindow->sendGRPacket(CHANGE_ICON, len, payload);	
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(CHANGE_ICON, len, payload);	
 	
 
 	delete[] payload;
@@ -160,9 +162,15 @@ void GRChangeIconWindow::OnChangeIcon(wxCommandEvent &event)
 int GRChangeIconWindow::findColorIndex(unsigned char red, unsigned char green, unsigned char blue)
 {
 	int x;
+	wxUint8 *colorTable = GRPluginManager::getInstance()->getColorTable();
+	if(colorTable == NULL) {
+		GRLogger::getInstance()->log(GRLogger::LOG_ERROR, wxT("Fatal Error: Error finding color index: Color table does not exist."));
+		return 0;
+	}
+
 	for(x = 0; x < 768; x++)
 	{
-		if(m_mainWindow->colorTable[x] == red && m_mainWindow->colorTable[x+1] == green && m_mainWindow->colorTable[x+2] == blue)
+		if(colorTable[x] == red && colorTable[x+1] == green && colorTable[x+2] == blue)
 		{
 			return x;
 		}
@@ -176,14 +184,20 @@ wxPalette *GRChangeIconWindow::getMacPalette()
 	unsigned char g[256];
 	unsigned char b[256];
 	int i;
+	wxUint8 *colorTable = GRPluginManager::getInstance()->getColorTable();
+	if(colorTable == NULL) {
+		GRLogger::getInstance()->log(GRLogger::LOG_ERROR, wxT("Fatal Error: Error getting mac palette: Color table does not exist."));
+		return new wxPalette(256, 0, 0, 0);
+	}
 
     for (i = 0; i < 256; i++)
     {
-		r[i] = m_mainWindow->colorTable[3*i + 0];
-		g[i] = m_mainWindow->colorTable[3*i + 1];
-		b[i] = m_mainWindow->colorTable[3*i + 2];
+		r[i] = colorTable[3*i + 0];
+		g[i] = colorTable[3*i + 1];
+		b[i] = colorTable[3*i + 2];
     }
     return new wxPalette(256, r, g, b);
+	
 }
 //-------------------------------------------------------------------------------
 wxInt32 GRChangeIconWindow::makeChecksum(wxUint8 *iconData)

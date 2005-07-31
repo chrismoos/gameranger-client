@@ -22,9 +22,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRFindPlayerWindow.h"
 #include "GRBaseDefs.h"
 #include "GRMainWindow.h"
+#include "GRUtil.h"
+#include "GRApplication.h"
+#include "GRConnection.h"
 #include "GRIcon.h"
 #include "GRLogWindow.h"
 #include "memdebug.h"
+
+/* Instance */
+GRFindPlayerWindow *GRFindPlayerWindow::_instance = NULL;
 
 GRFindPlayerWindow::GRFindPlayerWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size)
 		: wxFrame((wxFrame *) parent, -1, title, pos, size)
@@ -37,14 +43,27 @@ GRFindPlayerWindow::GRFindPlayerWindow(const wxFrame *parent,const wxString &tit
 
 	//Center window
 	CentreOnScreen();
-
-	//null it
-
 }
 //------------------------------------------------------------------------------------
 GRFindPlayerWindow::~GRFindPlayerWindow()
 {
-	if(m_mainWindow != NULL) m_mainWindow->searchWindow = NULL;
+
+}
+//-------------------------------------------------------------------------------------
+GRFindPlayerWindow *GRFindPlayerWindow::getInstance()
+{
+	if(_instance == NULL) {
+		_instance = new GRFindPlayerWindow(NULL, wxT("Find user"), wxDefaultPosition, wxDefaultSize);
+	}
+	return _instance;
+}
+//-------------------------------------------------------------------------------------
+GRFindPlayerWindow *GRFindPlayerWindow::getInstance(wxFrame *parent)
+{
+	if(_instance == NULL) {
+		_instance = new GRFindPlayerWindow(parent, wxT("Find user"), wxDefaultPosition, wxDefaultSize);
+	}
+	return _instance;
 }
 //-------------------------------------------------------------------------------------
 void GRFindPlayerWindow::createControls()
@@ -165,7 +184,7 @@ void GRFindPlayerWindow::searchByID()
 	memcpy(payload+sizeof(wxUint32), &userID, sizeof(wxUint32));
 
 	//send it
-	m_mainWindow->sendGRPacket(FIND_USER, len, payload);
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(FIND_USER, len, payload);
 
 	if(payload != NULL) delete[] payload;
 }
@@ -193,7 +212,7 @@ void GRFindPlayerWindow::searchByEmail()
 	strcpy((char*)payload+sizeof(wxUint32), (char*)(const char*)m_emailValue->GetValue().mb_str());
 
 	//send it
-	m_mainWindow->sendGRPacket(FIND_USER, len, payload);
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(FIND_USER, len, payload);
 
 	if(payload != NULL) delete[] payload;
 }
@@ -221,7 +240,7 @@ void GRFindPlayerWindow::searchByNick()
 	strcpy((char*)payload+sizeof(wxUint32), (char*)(const char*)m_nickValue->GetValue().mb_str());
 
 	//send it
-	m_mainWindow->sendGRPacket(FIND_USER, len, payload);
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(FIND_USER, len, payload);
 
 	if(payload != NULL) delete[] payload;
 }
@@ -249,7 +268,7 @@ void GRFindPlayerWindow::searchByAccount()
 	strcpy((char*)payload+sizeof(wxUint32), (char*)(const char*)m_accountValue->GetValue().mb_str());
 
 	//send it
-	m_mainWindow->sendGRPacket(FIND_USER, len, payload);
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(FIND_USER, len, payload);
 
 	if(payload != NULL) delete[] payload;
 }
@@ -280,17 +299,17 @@ void GRFindPlayerWindow::findUserResults(GR_PACKET *Packet)
 		break;
 
 		case SEARCH_BY_EMAIL:
-			tempStr = m_mainWindow->bufToStr(ptr);
+			tempStr = GRUtil::getInstance()->bufToStr(ptr);
 			ptr += tempStr.Len() + 1;
 		break;
 	
 		case SEARCH_BY_NICK:
-			tempStr = m_mainWindow->bufToStr(ptr);
+			tempStr = GRUtil::getInstance()->bufToStr(ptr);
 			ptr += tempStr.Len() + 1;
 		break;
 
 		case SEARCH_BY_ACCOUNT:
-			tempStr = m_mainWindow->bufToStr(ptr);
+			tempStr = GRUtil::getInstance()->bufToStr(ptr);
 			ptr += tempStr.Len() + 1;
 		break;
 	}
@@ -314,11 +333,11 @@ void GRFindPlayerWindow::findUserResults(GR_PACKET *Packet)
 		ptr += sizeof(wxUint32);
 
 		//nickname
-		nickname = m_mainWindow->bufToStr(ptr);
+		nickname = GRUtil::getInstance()->bufToStr(ptr);
 		ptr += nickname.Len() + 1;
 
 		//account name
-		accountName = m_mainWindow->bufToStr(ptr);
+		accountName = GRUtil::getInstance()->bufToStr(ptr);
 		ptr += accountName.Len() + 1;
 
 		if(accountName.Len() > 0) //show id
@@ -361,6 +380,6 @@ void GRFindPlayerWindow::OnUserDoubleClick(wxListEvent& event)
 	userID = (wxUint32)m_resultsList->GetItemData(index);
 	userID = wxUINT32_SWAP_ON_LE(userID);
 
-	m_mainWindow->sendGRPacket(GET_USER_INFO, sizeof(wxUint32), (wxUint8*)&userID);
+	GRApplication::getInstance()->getMainConnection()->sendGRPacket(GET_USER_INFO, sizeof(wxUint32), (wxUint8*)&userID);
 }
 //---------------------------------------------------------------------------------------

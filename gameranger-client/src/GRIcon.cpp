@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "GRIcon.h"
+#include "GRPluginManager.h"
 #include "memdebug.h"
 
 
@@ -52,6 +53,7 @@ wxImage *GRIcon::iconDataToImage(wxUint8 *data)
 	wxUint8 *ptr;
 	wxImage *img = new wxImage(16, 16);
 	ptr = data;
+	wxUint8 *colorTable = GRPluginManager::getInstance()->getColorTable();
 
 	if(colorTable == NULL) return NULL;
 

@@ -50,12 +50,15 @@ public:
 
 	//Games list
 	void addGameToList(GRPlugin *game);
+	void parseGamesList(wxUint8 *buf);
 	vector <GRPlugin*> gamesList;
 
 	//Status
 	bool isPremium();
 	bool isPlaying();
 	bool isIdle();
+	void setIdle();
+	void setActive();
 };
 
 #endif

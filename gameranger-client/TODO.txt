@@ -1,6 +1,10 @@
 Fix idle room status. - June 5 2005
 Add support for timestamps. - June 27 2005
 Get User Info in pm.
+User changes name in a game room, update it.
+Buddy lists.
+Ignore lists.
+Select default login account.
 
 
 OLD STUFF

@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRMainWindow.h"
 #include "GRLobby.h"
 #include "memdebug.h"
+#include "GRPluginManager.h"
 
 GRUser::GRUser(wxString nick, wxUint32 userID, wxUint32 iconID)
 {
@@ -42,7 +43,7 @@ GRUser::GRUser()
 //------------------------------------------------------------
 GRUser::~GRUser()
 {
-
+	gamesList.clear();
 }
 //------------------------------------------------------------
 void GRUser::SetStatus(wxUint8 status)
@@ -77,9 +78,61 @@ bool GRUser::isIdle()
 	else return false;
 }
 //----------------------------------------------------------------
+void GRUser::setIdle()
+{
+	status += 1;
+}
+//----------------------------------------------------------------
+void GRUser::setActive()
+{
+	status -= 1;
+}
+//----------------------------------------------------------------
 void GRUser::addGameToList(GRPlugin *game)
 {
 	if(game == NULL) return;
 	gamesList.push_back(game);
 }
 //----------------------------------------------------------------
+void GRUser::parseGamesList(wxUint8 *buf)
+{
+	wxUint8 *ptr;
+	wxUint8 count;
+	GRPlugin *plugin;
+	int x, y, offset = 1;
+	GRPluginManager *pluginManager = GRPluginManager::getInstance();
+	if(pluginManager == NULL) {
+		GRLogger::getInstance()->log(GRLogger::LOG_ERROR, wxT("Fatal error: How the heck can we parse the games list without a plugin manager?"));
+		return;
+	}
+
+	ptr = buf;
+
+	//count
+	count = *ptr;
+	ptr++;
+
+	for(x = 0; x < count; x++)
+	{
+		if((*ptr & 1) == 1) 
+			addGameToList(pluginManager->findPluginByCode(offset));
+		if((*ptr & 2) == 2)
+			addGameToList(pluginManager->findPluginByCode(offset+1));
+		if((*ptr & 4) == 4)
+			addGameToList(pluginManager->findPluginByCode(offset+2));
+		if((*ptr & 8) == 8)
+			addGameToList(pluginManager->findPluginByCode(offset+3));
+		if((*ptr & 16) == 16)
+			addGameToList(pluginManager->findPluginByCode(offset+4));
+		if((*ptr & 32) == 32)
+			addGameToList(pluginManager->findPluginByCode(offset+5));
+		if((*ptr & 64) == 64)
+			addGameToList(pluginManager->findPluginByCode(offset+6));
+		if((*ptr & 128) == 128)
+			addGameToList(pluginManager->findPluginByCode(offset+7));
+
+		offset += 8;
+		ptr++;
+	}
+}
+//--------------------------------------------------------------------------------------

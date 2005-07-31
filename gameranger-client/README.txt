@@ -1,7 +1,7 @@
 -------------------------------------------------
 Gameranger client
-Version 0.3
-08/15/04
+Version 0.5
+7/28/05
 ------------------------------------------------
 
 Windows:
@@ -9,6 +9,9 @@ Open the gameranger.dsw or gameranger.sh, depending on if you have visual studio
 
 Linux:
 Issue the command 'make', and that's it.
+
+Mac:
+Issue the command 'make'. You'll have to create a .app package. You can read on Apple's site for more information.
 
 
 

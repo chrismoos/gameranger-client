@@ -42,20 +42,25 @@ GRLogWindow::GRLogWindow(const wxFrame *parent,const wxString &title, const wxPo
 	mainSizer->SetSizeHints(this);
 	mainWindow = NULL;
 }
-//-------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------*/
 GRLogWindow::~GRLogWindow()
 {
+
 }
-//-------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------*/
+void GRLogWindow::OnWindowClose(wxCloseEvent &event)
+{
+	GRLogger::getInstance()->setWindowDestroyed();
+	this->Destroy();
+}
+/*------------------------------------------------------------------------------*/
 void GRLogWindow::logText(wxString str)
 {
 	wxString temp;
 	
 	temp = str + wxT("\n");
 
-#ifdef SHOW_LOG_WINDOW
 	textLog->AppendText(temp);
-#endif
 }
 //------------------------------------------------------------------------------
 void GRLogWindow::logData(wxUint8 *buf, wxUint32 length)

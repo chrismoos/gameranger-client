@@ -20,41 +20,54 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 #include "GRLoginWindow.h"
-#include "GRLogWindow.h"
+#include "GRLogger.h"
 #include "GRProfile.h"
+#include "GRApplication.h"
 #include "memdebug.h"
+
+/* Login Window instance */
+GRLoginWindow *GRLoginWindow::_instance = NULL;
 
 GRLoginWindow::GRLoginWindow(const wxFrame *parent, const wxString &title, const wxPoint &pos, const wxSize &size)
 		: wxFrame((wxFrame *) parent, -1, title, pos, size)
 {
-	//Set some generic window options
+	/* Set some generic window options */
 	SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE));
 
-	mainWindow = NULL;
-
-
-	//Create our controls
+	/* Create our controls */
 	createControls();
-
 	
-	//Load Profiles
-	loadProfiles();
-	currentProfile = NULL;
+	/* Load Profiles */
+	profileManager = GRProfileManager::getInstance();
+	populateProfilesList();
 
-	//Center window
+	/* Center window */
 	CentreOnScreen();
 }
-//-------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------*/
 GRLoginWindow::~GRLoginWindow()
 {
-	wxUint32 x;
-	for(x = 0; x < Profiles.size(); x++) delete(Profiles[x]);
-	if(mainWindow != NULL) 
-	{
-		mainWindow->loginWindow = NULL;
-	}
+	_instance = NULL;
 }
-//-------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------*/
+GRLoginWindow *GRLoginWindow::getInstance()
+{
+	if(_instance == NULL) {
+		_instance = new GRLoginWindow(NULL, wxT("Login to GameRanger"), wxDefaultPosition,
+			wxSize(200, 200));
+	}
+	return _instance;	
+}
+/*------------------------------------------------------------------------------------*/
+GRLoginWindow *GRLoginWindow::getInstance(wxFrame *parent)
+{
+	if(_instance == NULL) {
+		_instance = new GRLoginWindow(parent, wxT("Login to GameRanger"), wxDefaultPosition,
+			wxSize(200, 200));
+	}
+	return _instance;	
+}
+/*------------------------------------------------------------------------------------*/
 void GRLoginWindow::createControls()
 {
 	//Main sizer for the window
@@ -108,7 +121,40 @@ void GRLoginWindow::createControls()
 	mainSizer->Fit(panel);
 	mainSizer->SetSizeHints(this);
 }
-//--------------------------------------------------------------------------------
+/*-----------------------------------------------------------------------------------*/
+void GRLoginWindow::populateProfilesList()
+{
+	vector<GRProfile*> profileList = profileManager->getProfiles();
+	unsigned int x;
+
+	selectedProfile = NULL;
+
+	/* Delete current profiles from list */
+	comboBox->Clear();
+
+	/* Add New profile option */
+	comboBox->Append(wxT("New Profile"), (void*)NULL);
+	comboBox->SetSelection(0);
+
+	/* Add all regular profiles */
+	for(x = 0; x < profileList.size(); x++) {
+		comboBox->Append(profileList[x]->nickname, (void*)profileList[x]);
+		if(x == 0) {
+			comboBox->SetSelection(1);
+			selectedProfile = profileList[x];
+			/* Put profile values into according edit boxes */
+			emailEdit->SetValue(profileList[x]->email);
+			if(profileList[x]->savePass) {
+				passwordEdit->SetValue(profileList[x]->password);
+				savePass->SetValue(true);
+			}
+			else {
+				passwordEdit->SetValue(wxT(""));
+			}
+		}
+	}
+}
+/*-----------------------------------------------------------------------------------*/
 void GRLoginWindow::OnLoginButton(wxCommandEvent &event)
 {
 	wxMessageDialog *dlg;
@@ -133,87 +179,42 @@ void GRLoginWindow::OnLoginButton(wxCommandEvent &event)
 		delete(dlg);
 		return;
 	}
-	if(currentProfile == NULL) {
-		currentProfile = new GRProfile();
-		Profiles.push_back(currentProfile);
+	if(selectedProfile == NULL) {
+		GRApplication::getInstance()->Login(emailEdit->GetValue(), passwordEdit->GetValue(), savePass->IsChecked());
 	}
-	mainWindow->myUserID = currentProfile->grID;
-	mainWindow->myNickname = currentProfile->nickname;
-	mainWindow->currentProfile = currentProfile;
-
-	if(savePass->IsChecked()) {
-		mainWindow->currentProfile->password = passwordEdit->GetValue();
+	else {
+		selectedProfile->savePass = savePass->IsChecked();
+		selectedProfile->password = passwordEdit->GetValue();
+		GRApplication::getInstance()->Login(selectedProfile);
 	}
-
-	mainWindow->Login((char*)(const char*)emailEdit->GetValue().mb_str(), (char*)(const char*)passwordEdit->GetValue().mb_str());
-
 }
-//---------------------------------------------------------------------------------
-void GRLoginWindow::loadProfiles()
-{
-	wxDir dir;
-	wxString filename;
-	GRProfile *profile;
-	wxInt32 index;
-
-	if(!dir.Exists(wxGetCwd()+wxT("/profiles"))) {
-		wxMessageDialog *dlg = new wxMessageDialog(this, wxT("Error: Profile directory does not exist. Please create it and try again."), wxT("Directory Error"), wxICON_ERROR);
-		dlg->ShowModal();
-		delete(dlg);
-		return;
-	}
-		
-	dir.Open(wxGetCwd()+wxT("/profiles"));
-
-	if(!dir.IsOpened()) 
-	{
-		return;
-	}
-
-	bool cont = dir.GetFirst(&filename, wxT(""), wxDIR_FILES);
-	while(cont)
-	{
-		profile = new GRProfile();
-		profile->Read(wxGetCwd()+wxT("/profiles/")+filename);
-		profile->comboIndex = comboBox->GetCount();
-		comboBox->Append(profile->nickname);
-		Profiles.push_back(profile);
-		cont = dir.GetNext(&filename);
-	}
-	profile = new GRProfile();
-	profile->comboIndex = comboBox->GetCount();
-	profile->email = wxT("");
-	index = comboBox->GetCount();
-	comboBox->Append(wxT("New Profile"));
-	Profiles.push_back(profile);
-}
-//------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------*/
 void GRLoginWindow::OnComboBoxSelect(wxCommandEvent &event)
 {
-	int x, index;
 	GRProfile *profile = NULL;
 
-	index = comboBox->GetSelection();
-	if(index == -1) return;
+	profile = (GRProfile*)comboBox->GetClientData(event.GetSelection());
 
-	for(x = 0; x < Profiles.size(); x++)
-	{
-		if(Profiles[x]->comboIndex == index)
-		{
-			profile = Profiles[x];
-			break;
-		}
+	if(profile == NULL) { /* Default profile, zero stuff out */
+		emailEdit->SetValue(wxT(""));
+		passwordEdit->SetValue(wxT(""));
+		savePass->SetValue(false);
+		selectedProfile = NULL;
+		return;
 	}
 
-	if(profile == NULL) return;
-
-	currentProfile = profile;
-
+	/* Put profile values into according edit boxes */
 	emailEdit->SetValue(profile->email);
-	if(profile->password.Len() > 0) {
+	if(profile->savePass) {
 		passwordEdit->SetValue(profile->password);
 		savePass->SetValue(true);
 	}
+	else {
+		passwordEdit->SetValue(wxT(""));
+	}
 
+	/* we've selected this profile */
+	selectedProfile = profile;
 }
-//------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------*/
+

@@ -159,16 +159,34 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\src\GRApplication.cpp">
+			</File>
+			<File
 				RelativePath=".\src\GRChangeIconWindow.cpp">
 			</File>
 			<File
 				RelativePath=".\src\GRChangeMyGames.cpp">
 			</File>
 			<File
+				RelativePath=".\src\GRClientAuth.cpp">
+			</File>
+			<File
 				RelativePath=".\src\GRConnecStatusWindow.cpp">
 			</File>
 			<File
+				RelativePath=".\src\GRConnection.cpp">
+			</File>
+			<File
+				RelativePath=".\src\GRErrorParser.cpp">
+			</File>
+			<File
 				RelativePath=".\src\GRFindPlayerWindow.cpp">
+			</File>
+			<File
+				RelativePath=".\src\GRGameManager.cpp">
+			</File>
+			<File
+				RelativePath=".\src\GRGameParser.cpp">
 			</File>
 			<File
 				RelativePath="src\GRGameRoom.cpp">
@@ -269,6 +287,18 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\src\GRLobbyManager.cpp">
+			</File>
+			<File
+				RelativePath=".\src\GRLobbyParser.cpp">
+			</File>
+			<File
+				RelativePath=".\src\GRLogger.cpp">
+			</File>
+			<File
+				RelativePath=".\src\GRLoginParser.cpp">
+			</File>
+			<File
 				RelativePath="src\GRLoginWindow.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -307,6 +337,9 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\src\GRMainConnection.cpp">
 			</File>
 			<File
 				RelativePath="src\GRMainWindow.cpp">
@@ -349,6 +382,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\src\GRPluginManager.cpp">
+			</File>
+			<File
 				RelativePath=".\src\GRPremiumUserInfo.cpp">
 			</File>
 			<File
@@ -376,6 +412,9 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\src\GRProfileManager.cpp">
 			</File>
 			<File
 				RelativePath="src\GRRegWindow.cpp">
@@ -444,6 +483,9 @@
 				RelativePath=".\src\GRUserInfoWindow.cpp">
 			</File>
 			<File
+				RelativePath=".\src\GRUtil.cpp">
+			</File>
+			<File
 				RelativePath="src\Main.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -468,6 +510,9 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl">
 			<File
+				RelativePath=".\src\GRApplication.h">
+			</File>
+			<File
 				RelativePath="src\GRBaseDefs.h">
 			</File>
 			<File
@@ -477,10 +522,25 @@
 				RelativePath=".\src\GRChangeMyGames.h">
 			</File>
 			<File
+				RelativePath=".\src\GRClientAuth.h">
+			</File>
+			<File
+				RelativePath=".\src\GRConnection.h">
+			</File>
+			<File
 				RelativePath="src\GRConnectStatusWindow.h">
 			</File>
 			<File
+				RelativePath=".\src\GRErrorParser.h">
+			</File>
+			<File
 				RelativePath=".\src\GRFindPlayerWindow.h">
+			</File>
+			<File
+				RelativePath=".\src\GRGameManager.h">
+			</File>
+			<File
+				RelativePath=".\src\GRGameParser.h">
 			</File>
 			<File
 				RelativePath="src\GRGameRoom.h">
@@ -501,16 +561,34 @@
 				RelativePath="src\GRLobby.h">
 			</File>
 			<File
+				RelativePath=".\src\GRLobbyManager.h">
+			</File>
+			<File
+				RelativePath=".\src\GRLobbyParser.h">
+			</File>
+			<File
+				RelativePath=".\src\GRLogger.h">
+			</File>
+			<File
+				RelativePath=".\src\GRLoginParser.h">
+			</File>
+			<File
 				RelativePath="src\GRLoginWindow.h">
 			</File>
 			<File
 				RelativePath="src\GRLogWindow.h">
 			</File>
 			<File
+				RelativePath=".\src\GRMainConnection.h">
+			</File>
+			<File
 				RelativePath="src\GRMainWindow.h">
 			</File>
 			<File
 				RelativePath="src\GRPlugin.h">
+			</File>
+			<File
+				RelativePath=".\src\GRPluginManager.h">
 			</File>
 			<File
 				RelativePath=".\src\GRPremiumUserInfo.h">
@@ -523,6 +601,9 @@
 			</File>
 			<File
 				RelativePath="src\GRProfile.h">
+			</File>
+			<File
+				RelativePath=".\src\GRProfileManager.h">
 			</File>
 			<File
 				RelativePath="src\GRProtocol.h">
@@ -541,6 +622,9 @@
 			</File>
 			<File
 				RelativePath=".\src\GRUserInfoWindow.h">
+			</File>
+			<File
+				RelativePath=".\src\GRUtil.h">
 			</File>
 			<File
 				RelativePath="src\Main.h">

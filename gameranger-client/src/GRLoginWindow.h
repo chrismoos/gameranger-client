@@ -25,37 +25,47 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "GRBaseDefs.h"
 #include "GRConnectStatusWindow.h"
 #include "GRMainWindow.h"
+#include "GRProfileManager.h"
 
 class GRProfile;
 
 class GRLoginWindow : public wxFrame
 {
-	public:
-		GRLoginWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size);
-		~GRLoginWindow();
+private:
+	static GRLoginWindow *_instance;
 
-		//GUI Functions
-		void createControls();
+	GRProfileManager *profileManager;
 
-		//GUI Controls
-		wxTextCtrl *emailEdit;
-		wxTextCtrl *passwordEdit;
-		wxButton *loginButton;
-		wxComboBox *comboBox;
-		wxCheckBox *savePass;
+protected:
+	GRLoginWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size);
 
-		//Events
-		void OnLoginButton(wxCommandEvent &event);
-		void OnComboBoxSelect(wxCommandEvent &event);
-		
-		GRMainWindow *mainWindow;
+public:
+	~GRLoginWindow();
 
-		//Profiles
-		vector<GRProfile*> Profiles;
-		void loadProfiles();
-		GRProfile *currentProfile;
+	/* Get Instance of login window */
+	static GRLoginWindow *getInstance();
+	static GRLoginWindow *getInstance(wxFrame *parent);
 
-		DECLARE_EVENT_TABLE()
+	//GUI Functions
+	void createControls();
+
+	//GUI Controls
+	wxTextCtrl *emailEdit;
+	wxTextCtrl *passwordEdit;
+	wxButton *loginButton;
+	wxComboBox *comboBox;
+	wxCheckBox *savePass;
+	
+	//Events
+	void OnLoginButton(wxCommandEvent &event);
+	void OnComboBoxSelect(wxCommandEvent &event);
+
+	/* Profiles */
+	void populateProfilesList();
+	GRProfile *selectedProfile;
+	GRProfile *currentProfile;
+
+	DECLARE_EVENT_TABLE()
 };
 
 enum LOGIN_CONTROLS {

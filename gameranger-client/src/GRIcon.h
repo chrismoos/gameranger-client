@@ -34,7 +34,6 @@ public:
 	wxUint32 iconID;
 	wxUint32 imageIndex;
 	wxUint8 iconData[256];
-	wxUint8 *colorTable;
 
 	//Set Icon Data and ID
 	void SetIconData(wxUint8 *data);

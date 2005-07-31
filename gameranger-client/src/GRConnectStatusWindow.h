@@ -26,12 +26,22 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 class GRConnectStatusWindow : public wxFrame
 {
-	public:
-		GRConnectStatusWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size);
-		~GRConnectStatusWindow();
+public:
+	~GRConnectStatusWindow();
 
-		//Controls
-		wxGauge *statusIndicator;
+	/* get instance */
+	static GRConnectStatusWindow *getInstance();
+	static GRConnectStatusWindow *getInstance(wxFrame *parent);
+	
+	/* Controls */
+	wxGauge *statusIndicator;
+
+private:
+	static GRConnectStatusWindow *_instance;
+
+protected:
+	GRConnectStatusWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size);
+
 };
 
 #endif

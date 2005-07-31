@@ -21,29 +21,52 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "GRIconCache.h"
 #include "GRIcon.h"
+#include "GRLogger.h"
+#include "GRApplication.h"
 #include "memdebug.h"
+
+/* Icon cache instance */
+GRIconCache *GRIconCache::_instance = NULL;
+
+DEFINE_EVENT_TYPE(GRLOADCACHEEVENT)
 
 GRIconCache::GRIconCache()
 {
-	GRIcon *defaultIcon = new GRIcon();
-	wxString path = wxGetCwd();
-	wxBitmap pic3(path+wxT("/images/defaulticon.xpm"), wxBITMAP_TYPE_XPM);
-	defaultIcon->SetIconID(0);
-	defaultIcon->imageIndex = 0;
-	defaultIcon->image = new wxImage(pic3.ConvertToImage());
-	Icons.push_back(defaultIcon);
+	imgList = NULL;
+
+	if(wxFile::Exists(wxT("images/defaulticon.xpm"))) {
+		wxString path = wxGetCwd();
+		wxBitmap pic3(path+wxT("/images/defaulticon.xpm"), wxBITMAP_TYPE_XPM);
+		GRIcon *defaultIcon = new GRIcon();
+		defaultIcon->SetIconID(0);
+		defaultIcon->imageIndex = 0;
+		defaultIcon->image = new wxImage(pic3.ConvertToImage());
+		Icons.push_back(defaultIcon);
+	}
 }
 //-----------------------------------------------------------------------
 GRIconCache::~GRIconCache()
 {
 	int x;
+
+	/* Write cache */
+	SaveCache(wxT("Icon_Cache.bin"));
+
 	for(x = 0; x < Icons.size(); x++) 
 	{
-	
 		delete(Icons[x]);
 	}
+	Icons.clear();
 }
 //-----------------------------------------------------------------------
+GRIconCache *GRIconCache::getInstance()
+{
+	if(_instance == NULL) {
+		_instance = new GRIconCache();
+	}
+	return _instance;
+}
+/*-----------------------------------------------------------------------*/
 GRIcon *GRIconCache::findIcon(wxUint32 iconID)
 {
 	wxUint32 x;
@@ -67,6 +90,8 @@ void GRIconCache::SaveCache(wxString filename)
 	wxFile file;
 	GRIcon *icon;
 	wxUint32 iconCount, id;
+
+	if(Icons.size() == 0) return;
 
 	file.Open(filename, wxFile::write);
 
@@ -101,26 +126,56 @@ void GRIconCache::SaveCache(wxString filename)
 	delete[] buf;
 }
 //-----------------------------------------------------------------------
+void GRIconCache::startLoadCache()
+{
+	GRIconCacheLoadThread *thread = new GRIconCacheLoadThread();
+	thread->Run();	
+}
+/*-----------------------------------------------------------------------*/
 void GRIconCache::LoadCache(wxString filename)
+{
+	
+}
+//-------------------------------------------------------------------------
+
+
+
+GRIconCacheLoadThread::GRIconCacheLoadThread()
+{
+	Create();
+}
+/*-----------------------------------------------------------------------------*/
+void *GRIconCacheLoadThread::Entry()
 {
 	wxUint32 x, count, iconID;
 	wxUint8 *buf, *ptr;
 	wxUint32 len;
 	wxFile file;
 	GRIcon *icon;
+	wxString filename = wxString(wxT("Icon_Cache.bin"));
+	wxCommandEvent evt(GRLOADCACHEEVENT, LOADCACHEDONEID);
+
+	GRIconCache *iconCache = GRIconCache::getInstance();
 
 	//fatal error
-	if(colorTable == NULL) return; 
+	if(iconCache->colorTable == NULL) return 0;  
 
-	if(!file.Exists(filename)) return;
+	if(!file.Exists(filename)) {
+		::wxPostEvent(GRApplication::getInstance()->getMainWindow(), evt);
+		//GRLogger::getInstance()->log(GRLogger::LOG_INFO, wxT("Icon cache load failed. Creating new icon cache."));
+		return 0;
+	}
 
 	file.Open(filename, wxFile::read);
 
-	if(!file.IsOpened()) return;
+	if(!file.IsOpened()) {
+		//GRLogger::getInstance()->log(GRLogger::LOG_INFO, wxT("Icon cache load failed. Creating new icon cache."));
+		return 0;
+	}
 
 	len = file.Length();
 	buf = new wxUint8[len];
-	if(buf == NULL) return;
+	if(buf == NULL) return 0;
 
 	file.Read(buf, len);
 	ptr = buf;
@@ -128,7 +183,7 @@ void GRIconCache::LoadCache(wxString filename)
 	if(len < sizeof(wxUint32)) 
 	{
 		file.Close();
-		return;
+		return 0;
 	}
 
 	//# of icons
@@ -143,17 +198,20 @@ void GRIconCache::LoadCache(wxString filename)
 		ptr += sizeof(wxUint32);
 
 		icon = new GRIcon();
-		icon->colorTable = colorTable;
 		icon->SetIconID(iconID);
 		icon->SetIconData(ptr);
-		icon->imageIndex = imgList->Add(*icon->image);
-		Icons.push_back(icon);
+		icon->imageIndex = -1;
+		iconCache->Icons.push_back(icon);
 
 		ptr += 256;
 	}
 
 	file.Close();
-
 	delete[] buf;
+
+	
+	::wxPostEvent(GRApplication::getInstance()->getMainWindow(), evt);
+
+	return 0;
 }
-//-------------------------------------------------------------------------
+/*-----------------------------------------------------------------------------*/

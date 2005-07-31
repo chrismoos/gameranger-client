@@ -36,9 +36,14 @@ public:
 
 	GRMainWindow *mainWindow;
 
-	//Log functions
+	/* Events */
+	void OnWindowClose(wxCloseEvent &event);
+
+	/* Log functions */
 	void logText(wxString str);
 	void logData(wxUint8 *buf, wxUint32 length);
+
+	DECLARE_EVENT_TABLE()
 };
 
 #endif

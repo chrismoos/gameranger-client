@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "GRPremiumUserInfoWindow.h"
 #include "memdebug.h"
+#include "GRApplication.h"
+#include "GRMainConnection.h"
 
 GRPremiumUserInfoWindow::GRPremiumUserInfoWindow(const wxFrame *parent,const wxString &title, const wxPoint &pos, const wxSize &size)
 		: wxFrame((wxFrame *) parent, -1, title, pos, size)
@@ -45,7 +47,7 @@ GRPremiumUserInfoWindow::~GRPremiumUserInfoWindow()
 {
 	if(m_userInfo != NULL) delete(m_userInfo);
 	if(image != NULL) delete(image);
-	if(m_mainWindow != NULL) m_mainWindow->currentPremiumInfoWindow = NULL;
+	GRApplication::getInstance()->getMainConnection()->premiumInfoWindowClosed();
 }
 //-------------------------------------------------------------------------------------
 void GRPremiumUserInfoWindow::SetInfo(GRPremiumUserInfo *userInfo)

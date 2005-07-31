@@ -38,7 +38,7 @@ GRRegWindow::GRRegWindow(const wxString &title, const wxPoint &pos, const wxSize
 	m_socket->Notify(true);
 
 	//Status Window
-	statusWindow = new GRConnectStatusWindow(this, wxT("Connecting to server..."), wxDefaultPosition, wxDefaultSize);
+//	statusWindow = new GRConnectStatusWindow(this, wxT("Connecting to server..."), wxDefaultPosition, wxDefaultSize);
 
 	//Log Window
 	logWindow = new GRLogWindow(this, wxT("Log Window."), wxDefaultPosition, wxDefaultSize);
