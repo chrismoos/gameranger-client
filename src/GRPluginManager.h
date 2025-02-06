@@ -57,6 +57,7 @@ public:
 	vector <GRPlugin*> *getPlugins();
 	GRPlugin *getPluginAt(int x);
 
+	~GRPluginManager();
 protected:
 	GRPluginManager();
 

@@ -38,7 +38,7 @@ GRPluginManager::GRPluginManager()
 /*------------------------------------------------------------------------------*/
 GRPluginManager::~GRPluginManager()
 {
-	for(unsigned int x = 0; x < Plugins.size(); x++) {
+	for(size_t x = 0; x < Plugins.size(); x++) {
 		delete(Plugins[x]);
 	}
 	Plugins.clear();

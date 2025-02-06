@@ -98,9 +98,9 @@ void GRUserInfoWindow::SetInfo(GRUserInfo *userInfo)
 	{
 		if(m_userInfo->m_icon->image != NULL) 
 		{
-			userIcon.CopyFromBitmap(wxBitmap(m_userInfo->m_icon->image));
+			userIcon.CopyFromBitmap(wxBitmap(*m_userInfo->m_icon->image));
 			SetIcon(userIcon);
-			usrbmp->SetBitmap(wxBitmap(m_userInfo->m_icon->image));
+			usrbmp->SetBitmap(wxBitmap(*m_userInfo->m_icon->image));
 		}
 	}
 
@@ -147,7 +147,7 @@ void GRUserInfoWindow::createControls()
 	//map
 	image = new wxImage();
 	image->LoadFile(wxT("images/map.jpg"), wxBITMAP_TYPE_JPEG);
-	wxStaticBitmap *bmp = new wxStaticBitmap(this, -1, wxBitmap(image));
+	wxStaticBitmap *bmp = new wxStaticBitmap(this, -1, wxBitmap(*image));
 	usrbmp = new wxStaticBitmap(this, -1, wxNullBitmap, wxDefaultPosition, wxSize(16,16));
 
 	grid->Add(iconText);

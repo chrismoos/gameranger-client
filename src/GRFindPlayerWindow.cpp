@@ -138,6 +138,8 @@ void GRFindPlayerWindow::createControls()
 //--------------------------------------------------------------------------------------
 void GRFindPlayerWindow::OnSearch(wxCommandEvent &event)
 {
+	(void)event;
+
 	m_resultsList->DeleteAllItems();
 	if(m_accountValue->GetValue().Len() > 0)
 	{
@@ -323,7 +325,7 @@ void GRFindPlayerWindow::findUserResults(GR_PACKET *Packet)
 	resultsSizer->GetStaticBox()->SetLabel(wxT("Search Results: ")+tempStr+wxString::Format(wxT("(%d hits)"), resultCount));
 
 	//font
-	font.SetWeight(wxBOLD);
+	font.SetWeight(wxFONTWEIGHT_BOLD);
 
 	for(x = 0; x < resultCount; x++)
 	{
@@ -353,9 +355,9 @@ void GRFindPlayerWindow::findUserResults(GR_PACKET *Packet)
 		item.m_itemId = index;
 		item.SetText(nickname);
 		if(accountName.Len() > 0)
-			font.SetWeight(wxBOLD);
+			font.SetWeight(wxFONTWEIGHT_BOLD);
 		else
-			font.SetWeight(wxNORMAL);
+			font.SetWeight(wxFONTWEIGHT_NORMAL);
 		item.SetFont(font);
 		m_resultsList->SetItem(item);
 

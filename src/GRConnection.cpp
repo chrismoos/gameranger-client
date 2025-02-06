@@ -51,7 +51,8 @@ GRConnection::~GRConnection()
 /*------------------------------------------------------------------------------*/
 void GRConnection::OnSocketEvent(wxSocketEvent& event)
 {
-	switch(event.GetSocketEvent()) 
+	auto socket = event.GetSocketEvent();
+	switch(socket)
 	{
 		case wxSOCKET_CONNECTION:
 			OnConnect();
@@ -200,6 +201,8 @@ void GRConnection::OnUnableToConnect()
 /*-----------------------------------------------------------------------------------*/
 void GRConnection::OnTimer(wxTimerEvent &evt)
 {
+	(void)evt;
+
 	sendGRPacket(GR_ALIVE_PULSE, 0, NULL);
 }
 /*------------------------------------------------------------------------------*/

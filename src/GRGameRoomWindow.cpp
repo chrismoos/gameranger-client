@@ -389,10 +389,10 @@ void GRGameRoomWindow::OnButtonClick(wxCommandEvent &event)
 		actionButton->SetLabel(wxT("Abort"));
 		addTextWithColor(wxT("<< Starting game >>\n"), *wxRED);
 #ifdef WIN32
-		ShellExecute(NULL, "Open", 
-			"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear\\UrbanOperations.exe", 
-			"-server 2346", 
-			"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear", SW_NORMAL);
+		ShellExecute(NULL, L"Open", 
+			L"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear\\UrbanOperations.exe", 
+			L"-server 2346", 
+			L"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear", SW_NORMAL);
 #endif
 	}
 	else if(actionMsg == wxT("Abort")) { /* abort game(hosts and players) */
@@ -410,10 +410,10 @@ void GRGameRoomWindow::OnButtonClick(wxCommandEvent &event)
 		mainWindow->sendGRPacket(GAME_LAUNCH_LOADING, 0, NULL);
 		mainWindow->sendGRPacket(GAME_LAUNCH_DONE, 0, NULL);
 #ifdef WIN32
-		ShellExecute(NULL, "Open", 
-			"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear\\UrbanOperations.exe", 
+		ShellExecute(NULL, L"Open", 
+			L"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear\\UrbanOperations.exe", 
 			wxString::Format("-client %s 2346", gameRoom->ip), 
-			"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear", SW_NORMAL);
+			L"C:\\Program Files\\Red Storm Entertainment\\Rogue Spear", SW_NORMAL);
 #endif
 	}
 }

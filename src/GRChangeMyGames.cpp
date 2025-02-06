@@ -78,8 +78,10 @@ void GRChangeMyGames::createControls()
 //--------------------------------------------------------------------------------------
 void GRChangeMyGames::OnSaveGameList(wxCommandEvent &event)
 {
+	(void)event;
+
 	vector <GRPlugin*> plugins;
-	int x, y;
+	size_t x, y;
 	wxUint8 *buf;
 	wxString str;
 	wxUint8 *gamesList;
@@ -151,8 +153,9 @@ void GRChangeMyGames::populateListBox()
 //----------------------------------------------------------------------------------------
 void GRChangeMyGames::OnCheckAll(wxCommandEvent &event)
 {
-	int x;
-	for(x = 0; x < m_listBox->GetCount(); x++)
+	(void)event;
+
+	for(size_t x = 0; x < m_listBox->GetCount(); x++)
 	{
 		m_listBox->Check(x, true);
 	}
@@ -160,8 +163,9 @@ void GRChangeMyGames::OnCheckAll(wxCommandEvent &event)
 //---------------------------------------------------------------------------------------
 void GRChangeMyGames::OnUncheckAll(wxCommandEvent &event)
 {
-	int x;
-	for(x = 0; x < m_listBox->GetCount(); x++)
+	(void)event;
+
+	for(size_t x = 0; x < m_listBox->GetCount(); x++)
 	{
 		m_listBox->Check(x, false);
 	}

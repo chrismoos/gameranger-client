@@ -96,11 +96,11 @@ GRMainWindow::GRMainWindow(const wxString &title, const wxPoint &pos, const wxSi
 /*--------------------------------------------------------------------------------------*/
 void GRMainWindow::setupIconImageList()
 {
-	GRIconCache *iconCache = GRIconCache::getInstance();
+	GRIconCache *icnCache = GRIconCache::getInstance();
 	iconImgList = new wxImageList(16, 16);
-	iconCache->imgList = iconImgList;
-	for(unsigned int x = 0; x < iconCache->Icons.size(); x++) {
-		iconCache->Icons[x]->imageIndex = iconImgList->Add(*iconCache->Icons[x]->image);
+	icnCache->imgList = iconImgList;
+	for(size_t x = 0; x < icnCache->Icons.size(); x++) {
+		icnCache->Icons[x]->imageIndex = iconImgList->Add(*icnCache->Icons[x]->image);
 	}
 	userListBox->AssignImageList(iconImgList, wxIMAGE_LIST_SMALL);
 }
@@ -172,7 +172,7 @@ void GRMainWindow::setupWindow()
 
 	//User list box popup menu
 	popupMenu = new wxMenu();
-    popupMenu->Append(USER_LIST_MENU_GET_INFO, wxT("Get &user info"));
+	popupMenu->Append(USER_LIST_MENU_GET_INFO, wxT("Get &user info"));
 	popupMenu->Append(GAMES_LIST_MENU, wxT("Games"), gameListMenu);
 
 	//Options Menu
@@ -373,8 +373,8 @@ void GRMainWindow::removeUserFromListBox(GRUser *user)
 /*-------------------------------------------------------------------------------------*/
 int GRMainWindow::getUserListBoxIndex(GRUser *user)
 {
-	for(unsigned int x = 0; x < userListBox->GetItemCount(); x++) {
-		if(userListBox->GetItemData(x) == (long)user) return x;
+	for(size_t x = 0; x < userListBox->GetItemCount(); x++) {
+		if(userListBox->GetItemData(x) == (unsigned long)user) return x;
 	}
 	return -1;
 }
@@ -450,7 +450,7 @@ void GRMainWindow::setupPluginImageList()
 	GRPluginManager *pluginManager = GRPluginManager::getInstance();
 	GRPlugin *plugin;
 
-	for(unsigned int x = 0; x < pluginManager->getPluginCount(); x++) {
+	for(size_t x = 0; x < pluginManager->getPluginCount(); x++) {
 		plugin = pluginManager->getPluginAt(x);
 		if(plugin == NULL) continue;
 		if(plugin->image == NULL) continue;
@@ -486,7 +486,7 @@ void GRMainWindow::cleanupGR()
 void GRMainWindow::Login(char *email, char *password)
 {
 	//this->Show(true);
-    strcpy(GRemail, email);
+	strcpy(GRemail, email);
 	strcpy(GRpassword, password);
 	connectToServer();
 
@@ -530,7 +530,7 @@ void GRMainWindow::createControls()
 	
 	//Add Notebook to sizer
 	//topSizer->Add(notebook, 2, wxALIGN_TOP | wxALIGN_CENTER | wxALL | wxGROW | wxEXPAND, 5);
-	topSizer->Add(gameRoomList, 2, wxALIGN_TOP | wxALIGN_CENTER | wxALL | wxGROW | wxEXPAND, 5);
+	topSizer->Add(gameRoomList, 2, wxALIGN_TOP | wxALIGN_CENTER | wxALL, 5);
 	
 
 	//ComboBox
@@ -562,18 +562,18 @@ void GRMainWindow::createControls()
 	wxBoxSizer *middleSizer = new wxBoxSizer(wxVERTICAL);
 
 	//Chat window and chat edit field
-	middleSizer->Add(chatTextCtrl, 1, wxALIGN_CENTER | wxRIGHT | wxBOTTOM | wxGROW, 5);
-	middleSizer->Add(chatEditField, 0, wxALIGN_CENTER | wxRIGHT | wxGROW, 5);
+	middleSizer->Add(chatTextCtrl, 1, wxALIGN_CENTER | wxRIGHT | wxBOTTOM, 5);
+	middleSizer->Add(chatEditField, 0, wxALIGN_CENTER | wxRIGHT, 5);
 
 	//user list/combo box
-	rightSizer->Add(lobbyComboBox, 0, wxALIGN_RIGHT | wxALIGN_TOP | wxRIGHT | wxBOTTOM | wxGROW, 5);
-	rightSizer->Add(userListBox, 1, wxALIGN_BOTTOM | wxALIGN_RIGHT | wxRIGHT | wxBOTTOM | wxGROW, 5);
+	rightSizer->Add(lobbyComboBox, 0, wxALIGN_RIGHT | wxALIGN_TOP | wxRIGHT | wxBOTTOM, 5);
+	rightSizer->Add(userListBox, 1, wxALIGN_RIGHT | wxRIGHT | wxBOTTOM, 5);
 
 	//add to main chat sizer
-	chatSizer->Add(middleSizer, 3, wxALIGN_CENTER | wxALL | wxGROW, 0);
-	chatSizer->Add(rightSizer, 1, wxALIGN_RIGHT  | wxALL | wxGROW | wxEXPAND, 0);
+	chatSizer->Add(middleSizer, 3, wxALIGN_CENTER | wxALL, 0);
+	chatSizer->Add(rightSizer, 1, wxALL, 0);
 	
-	topSizer->Add(chatSizer, 3, wxBOTTOM | wxLEFT | wxRIGHT | wxGROW, 5);
+	topSizer->Add(chatSizer, 3, wxBOTTOM | wxLEFT | wxRIGHT, 5);
 
 
 	//Activate Sizer
@@ -745,7 +745,7 @@ void GRMainWindow::gameRoomLaunched(GR_PACKET *Packet)
 	wxString pass = bufToStr(Packet->payload);
 
 	if(currentGameRoom == NULL) /* we aren't in a room */
-        return;
+		return;
 
 	currentGameRoom->gameRoom->status += 8;
 	setGameRoomListInfo(currentGameRoom->gameRoom);
@@ -925,7 +925,7 @@ void GRMainWindow::addGameRoom(wxUint32 gameRoomID, wxUint32 gameCode, wxUint32 
 
 		if(room->Plugin->image != NULL) 
 		{
-			roomIcon.CopyFromBitmap(wxBitmap(room->Plugin->image));
+			roomIcon.CopyFromBitmap(wxBitmap(*room->Plugin->image));
 		}
 
 		gameRoom->SetIcon(roomIcon);
@@ -1181,7 +1181,7 @@ void GRMainWindow::addTextWithColor(wxString str, wxColour color)
 //-----------------------------------------------------------------------------
 int wxCALLBACK wxListCompareFunction(long item1, long item2, long sortData)
 {
-    if(item1 == item2) return 0;
+	if(item1 == item2) return 0;
 	else if(item1 < item2) return -1;
 	else if(item1 > item2) return 1;
 	return 0;
@@ -1209,7 +1209,7 @@ void GRMainWindow::OnUserDoubleClick(wxListEvent& event)
 	pm->userID = user->userID;
 	pm->nickname = user->nick;
 	pm->Show(true);
-    privateMessages.push_back(pm);
+	privateMessages.push_back(pm);
 }
 //------------------------------------------------------------------------------
 GRPrivateMessage *GRMainWindow::findPrivateMessageByID(wxUint32 userID)
@@ -1262,7 +1262,7 @@ void GRMainWindow::receivedPrivateMessage(GR_PACKET *Packet)
 	pm->addTextWithColor(nickname, *wxBLUE);
 	pm->addTextWithColor(wxT(": ")+message+wxT("\n"), *wxBLACK);
 	pm->chatEditField->SetFocus();
-    privateMessages.push_back(pm);
+	privateMessages.push_back(pm);
 }
 /*-----------------------------------------------------------------------------*/
 void GRMainWindow::OnGameRoomDoubleClick(wxListEvent& event)
@@ -1354,7 +1354,7 @@ void GRMainWindow::gameRoomUserList(GR_PACKET *Packet)
 
 		if(room->Plugin->image != NULL) 
 		{
-			roomIcon.CopyFromBitmap(wxBitmap(room->Plugin->image));
+			roomIcon.CopyFromBitmap(wxBitmap(*room->Plugin->image));
 		}
 
 		gameRoom->SetIcon(roomIcon);
@@ -1721,9 +1721,9 @@ void GRMainWindow::appBanner(GR_PACKET *Packet)
 //-----------------------------------------------------------------------------------
 void GRMainWindow::saveBanner(wxUint8 *data, wxUint32 length, wxUint32 bannerID)
 {
-	char *swfFile = "FWS";
-	char *gifFile = "GIF";
-	char *jpgFile = "\xff\xd8";
+	const char *swfFile = "FWS";
+    const char *gifFile = "GIF";
+    const char *jpgFile = "\xff\xd8";
 	wxString extension;
 
 	if(memcmp(swfFile, data, 3) == 0)
@@ -1878,8 +1878,9 @@ void GRMainWindow::makeGameListMenu(wxListCtrl *list, wxMenu *gameMenu, int inde
 	{
 		if(user->gamesList[x]->gameCode == 0xffffffff) continue;
 		gameItem = new wxMenuItem(gameListMenu, x);
-		gameItem->SetBitmap(wxBitmap(user->gamesList[x]->image));
-		gameItem->SetText(user->gamesList[x]->gameName);
+		gameItem->SetBitmap(wxBitmap(*user->gamesList[x]->image));
+		//gameItem->SetText(user->gamesList[x]->gameName);
+		gameItem->SetItemLabel(user->gamesList[x]->gameName);
 		gameMenu->Append(gameItem);
 	}
 }
@@ -1910,12 +1911,12 @@ void GRMainWindow::setGameRoomListInfo(GRGameRoom *gameRoom)
 	if(gameRoom->isPremium()) font.SetWeight(wxBOLD);
 	if(gameRoom->isIdle()) info.SetTextColour(*wxLIGHT_GREY);
 
-    info.m_mask = wxLIST_MASK_TEXT;
+	info.m_mask = wxLIST_MASK_TEXT;
 	info.m_text = gameRoom->host;
-    info.m_itemId = index;
-    info.m_col = 1;
+	info.m_itemId = index;
+	info.m_col = 1;
 	info.SetFont(font);
-    
+	
 	gameRoomList->SetItem(info);
 
 	/* if game room is playing or not */

@@ -74,9 +74,6 @@ bool GRGameParser::run(GR_PACKET *Packet)
 void GRGameParser::parseGameRoomStatusChanged(GR_PACKET *Packet)
 {
 	GR_ROOM_STATUS_CHANGED *pck;
-	GRGameRoom *room = NULL;
-	wxInt32 index;
-	int x;
 
 	pck = (GR_ROOM_STATUS_CHANGED*)Packet->payload;
 
@@ -204,7 +201,7 @@ void GRGameParser::parseGameRoomsList(GR_PACKET *Packet)
 	wxUint8 *buf;
 	wxUint32 gameCount;
 	wxUint32 x;
-	GRGameRoom *gameRoom;
+	//GRGameRoom *gameRoom;
 	parseGameReturn *ret;
 	GRGameManager *gameManager = conn->getGameManager();
 

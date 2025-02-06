@@ -31,9 +31,9 @@ public:
 	static GRLogger *getInstance();
 
 	/* Some types of logging */
-	const static LOG_INFO = 1;
-	const static LOG_WARNING = 2;
-	const static LOG_ERROR = 3;
+	const static int LOG_INFO = 1;
+	const static int LOG_WARNING = 2;
+	const static int LOG_ERROR = 3;
 
 	/* Log stuff */
 	void log(int type, wxString msg);

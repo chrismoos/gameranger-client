@@ -81,10 +81,13 @@ void GRChangeIconWindow::createControls()
 	mainSizer->Fit(this);
 	mainSizer->SetSizeHints(this);
 }
+
 //--------------------------------------------------------------------------------------
 void GRChangeIconWindow::OnLoadIcon(wxCommandEvent &event)
 {
-	wxFileDialog *dlg = new wxFileDialog(this, wxT("Locate an image"), wxT(""), wxT(""), wxT("*.*"), wxOPEN);
+	(void)event;
+
+	wxFileDialog *dlg = new wxFileDialog(this, wxT("Locate an image"), wxT(""), wxT(""), wxT("*.*"), wxFD_OPEN);
 	wxString path;
 
 	if(dlg->ShowModal() == wxID_CANCEL) return;
@@ -104,7 +107,7 @@ void GRChangeIconWindow::OnLoadIcon(wxCommandEvent &event)
 		plt = getMacPalette();
 	}
 	bmp->SetPalette(*plt);
-	bmp->SetBitmap(wxBitmap(m_img));
+	bmp->SetBitmap(wxBitmap(*m_img));
 
 
 	delete(plt);
@@ -114,6 +117,8 @@ void GRChangeIconWindow::OnLoadIcon(wxCommandEvent &event)
 //----------------------------------------------------------------------------------------
 void GRChangeIconWindow::OnChangeIcon(wxCommandEvent &event)
 {
+	(void)event;
+
 	if(m_mainWindow == NULL) return;
 	wxUint8 *payload;
 	wxUint8 *iconData = new wxUint8[256];

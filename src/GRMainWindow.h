@@ -247,7 +247,7 @@ public:
 	//Game Room Windows
 	vector <GRGameRoomWindow*> gameRoomWindows;
 	GRGameRoomWindow *currentGameRoom;
-	int currentRoomID;
+    wxUint32 currentRoomID;
 
 	//User Info
 	GRPremiumUserInfoWindow *currentPremiumInfoWindow;
