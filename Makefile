@@ -17,4 +17,4 @@ $(PROGRAM):     $(OBJECTS)
 	$(CXX) -o $(PROGRAM) $(OBJECTS) `wx-config --libs`
 
 clean:
-	rm -f *.o $(PROGRAM)
+	rm -f $(OBJECTS) $(PROGRAM)

@@ -30,6 +30,7 @@ DECLARE_EVENT_TYPE(GRPLUGINLOADEVENT, -1)
 class GRPluginManager {
 public:
 	static GRPluginManager *getInstance();
+	~GRPluginManager();
 
 	/* Accessors */
 	static wxString getPluginDirectory();

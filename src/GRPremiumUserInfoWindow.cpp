@@ -119,7 +119,7 @@ void GRPremiumUserInfoWindow::SetInfo(GRPremiumUserInfo *userInfo)
 	{
 		if(m_userInfo->m_icon->image != NULL) 
 		{
-			userIcon.CopyFromBitmap(wxBitmap(m_userInfo->m_icon->image));
+			userIcon.CopyFromBitmap(wxBitmap(*m_userInfo->m_icon->image));
 			SetIcon(userIcon);
 		}
 	}
@@ -184,8 +184,8 @@ void GRPremiumUserInfoWindow::createControls()
 	wxInitAllImageHandlers();
 	image->LoadFile(wxT("images/map.jpg"), wxBITMAP_TYPE_JPEG);
 	image1->LoadFile(wxT("images/blank.jpg"), wxBITMAP_TYPE_JPEG);
-	wxStaticBitmap *bmp = new wxStaticBitmap(this, -1, wxBitmap(image));
-	bmp1 = new wxStaticBitmap(this, -1, wxBitmap(image1), wxDefaultPosition, wxSize(64,64));
+	wxStaticBitmap *bmp = new wxStaticBitmap(this, -1, wxBitmap(*image));
+	bmp1 = new wxStaticBitmap(this, -1, wxBitmap(*image1), wxDefaultPosition, wxSize(64,64));
 
 	//grid
 	grid1->Add(accountNameText);
@@ -250,6 +250,6 @@ wxString GRPremiumUserInfoWindow::ToString(char *text)
 //---------------------------------------------------------------------------------
 void GRPremiumUserInfoWindow::SetImage(wxImage *img)
 {
-	bmp1->SetBitmap(wxBitmap(img));
+	bmp1->SetBitmap(wxBitmap(*img));
 }
 //------------------------------------------------------------------------------------

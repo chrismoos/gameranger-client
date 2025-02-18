@@ -530,7 +530,7 @@ void GRMainWindow::createControls()
 	
 	//Add Notebook to sizer
 	//topSizer->Add(notebook, 2, wxALIGN_TOP | wxALIGN_CENTER | wxALL | wxGROW | wxEXPAND, 5);
-	topSizer->Add(gameRoomList, 2, wxALIGN_TOP | wxALIGN_CENTER | wxALL | wxGROW | wxEXPAND, 5);
+	topSizer->Add(gameRoomList, 2, wxALL | wxGROW | wxEXPAND, 5);
 	
 
 	//ComboBox
@@ -562,16 +562,16 @@ void GRMainWindow::createControls()
 	wxBoxSizer *middleSizer = new wxBoxSizer(wxVERTICAL);
 
 	//Chat window and chat edit field
-	middleSizer->Add(chatTextCtrl, 1, wxALIGN_CENTER | wxRIGHT | wxBOTTOM | wxGROW, 5);
-	middleSizer->Add(chatEditField, 0, wxALIGN_CENTER | wxRIGHT | wxGROW, 5);
+	middleSizer->Add(chatTextCtrl, 1, wxRIGHT | wxBOTTOM | wxGROW, 5);
+	middleSizer->Add(chatEditField, 0, wxRIGHT | wxGROW, 5);
 
 	//user list/combo box
-	rightSizer->Add(lobbyComboBox, 0, wxALIGN_RIGHT | wxALIGN_TOP | wxRIGHT | wxBOTTOM | wxGROW, 5);
-	rightSizer->Add(userListBox, 1, wxALIGN_BOTTOM | wxALIGN_RIGHT | wxRIGHT | wxBOTTOM | wxGROW, 5);
+	rightSizer->Add(lobbyComboBox, 0, wxRIGHT | wxBOTTOM | wxGROW, 5);
+	rightSizer->Add(userListBox, 1, wxRIGHT | wxBOTTOM | wxGROW, 5);
 
 	//add to main chat sizer
-	chatSizer->Add(middleSizer, 3, wxALIGN_CENTER | wxALL | wxGROW, 0);
-	chatSizer->Add(rightSizer, 1, wxALIGN_RIGHT  | wxALL | wxGROW | wxEXPAND, 0);
+	chatSizer->Add(middleSizer, 3, wxALL | wxGROW, 0);
+	chatSizer->Add(rightSizer, 1, wxALL | wxGROW | wxEXPAND, 0);
 	
 	topSizer->Add(chatSizer, 3, wxBOTTOM | wxLEFT | wxRIGHT | wxGROW, 5);
 
@@ -925,7 +925,7 @@ void GRMainWindow::addGameRoom(wxUint32 gameRoomID, wxUint32 gameCode, wxUint32 
 
 		if(room->Plugin->image != NULL) 
 		{
-			roomIcon.CopyFromBitmap(wxBitmap(room->Plugin->image));
+			roomIcon.CopyFromBitmap(wxBitmap(*room->Plugin->image));
 		}
 
 		gameRoom->SetIcon(roomIcon);
@@ -1354,7 +1354,7 @@ void GRMainWindow::gameRoomUserList(GR_PACKET *Packet)
 
 		if(room->Plugin->image != NULL) 
 		{
-			roomIcon.CopyFromBitmap(wxBitmap(room->Plugin->image));
+			roomIcon.CopyFromBitmap(wxBitmap(*room->Plugin->image));
 		}
 
 		gameRoom->SetIcon(roomIcon);
@@ -1878,8 +1878,8 @@ void GRMainWindow::makeGameListMenu(wxListCtrl *list, wxMenu *gameMenu, int inde
 	{
 		if(user->gamesList[x]->gameCode == 0xffffffff) continue;
 		gameItem = new wxMenuItem(gameListMenu, x);
-		gameItem->SetBitmap(wxBitmap(user->gamesList[x]->image));
-		gameItem->SetText(user->gamesList[x]->gameName);
+		gameItem->SetBitmap(wxBitmap(*user->gamesList[x]->image));
+		gameItem->SetItemLabel(user->gamesList[x]->gameName);
 		gameMenu->Append(gameItem);
 	}
 }

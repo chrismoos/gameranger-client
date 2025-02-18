@@ -68,11 +68,11 @@ void GRHostWindow::createControls()
 
 	/* game list box */
 	gameCombo = new wxComboBox(this, HOST_GAME_COMBO_LIST, wxT(""), wxDefaultPosition,
-		wxSize(200,20), NULL, wxCB_READONLY | wxCB_SORT);
+		wxSize(200,20)); //, NULL, wxCB_READONLY | wxCB_SORT);
 
 	/* players combo box */
 	playersCombo = new wxComboBox(this, PLAYERS_GAME_COMBO_LIST, wxT(""), wxDefaultPosition,
-		wxSize(50,20), NULL, wxCB_READONLY);
+		wxSize(50,20));
 
 	/* description text box */
 	descText = new wxTextCtrl(this, -1, wxT(""), wxDefaultPosition,

@@ -84,16 +84,16 @@ void GRLoginWindow::createControls()
 
 	/* --------------- Create Email and Password fields and static texts ---------- */
 	//combo box
-	comboBox = new wxComboBox(panel, PROFILE_COMBO_BOX, wxT(""), wxDefaultPosition, wxSize(150, 20),
+	comboBox = new wxComboBox(this, PROFILE_COMBO_BOX, wxT(""), wxDefaultPosition, wxSize(150, 20),
 		0, NULL, wxCB_READONLY);
 
-	emailEdit = new wxTextCtrl(panel, -1, wxT(""), wxDefaultPosition, wxSize(150, 20));
+	emailEdit = new wxTextCtrl(this, -1, wxT(""), wxDefaultPosition, wxSize(150, 20));
 	emailEdit->SetMaxLength(32);
-	passwordEdit = new wxTextCtrl(panel, -1, wxT(""), wxDefaultPosition, wxSize(150, 20), wxTE_PASSWORD);
+	passwordEdit = new wxTextCtrl(this, -1, wxT(""), wxDefaultPosition, wxSize(150, 20), wxTE_PASSWORD);
 	passwordEdit->SetMaxLength(32);
-	wxStaticText *profileText = new wxStaticText(panel, -1, wxT("Profile: "));
-	wxStaticText *emailStatic = new wxStaticText(panel, -1, wxT("E-Mail Address: "));
-	wxStaticText *passStatic = new wxStaticText(panel, -1, wxT("Password: "));
+	wxStaticText *profileText = new wxStaticText(this, -1, wxT("Profile: "));
+	wxStaticText *emailStatic = new wxStaticText(this, -1, wxT("E-Mail Address: "));
+	wxStaticText *passStatic = new wxStaticText(this, -1, wxT("Password: "));
 
 	gridSizer->Add(profileText, 0, wxALIGN_LEFT);
 	gridSizer->Add(comboBox, 0, wxALIGN_CENTER);
@@ -102,11 +102,11 @@ void GRLoginWindow::createControls()
 	gridSizer->Add(passStatic, 0, wxALIGN_LEFT);
 	gridSizer->Add(passwordEdit, 0, wxALIGN_CENTER);
 
-	savePass = new wxCheckBox(panel, -1, wxT("Save password"), wxDefaultPosition, wxDefaultSize);
+	savePass = new wxCheckBox(this, -1, wxT("Save password"), wxDefaultPosition, wxDefaultSize);
 
 
 	/* ------------------- Create Buttons ------------------------------------------ */
-	wxButton *loginButton = new wxButton(panel, LOGIN_BUTTON, wxT("Login"), wxDefaultPosition, wxDefaultSize);
+	wxButton *loginButton = new wxButton(this, LOGIN_BUTTON, wxT("Login"), wxDefaultPosition, wxDefaultSize);
 	bottomSizer->Add(loginButton, 0, wxALIGN_CENTER | wxRIGHT, 5);
 
 
